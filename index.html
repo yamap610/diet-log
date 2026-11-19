@@ -94,10 +94,11 @@
 
   /* ===== 今天：喝水 ===== */
   .cups{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-  .cup{width:34px;height:42px;border-radius:6px 6px 10px 10px;border:1.5px solid var(--blue);background:transparent;position:relative;overflow:hidden;cursor:pointer;padding:0}
-  .cup i{position:absolute;left:0;right:0;bottom:0;background:var(--blue-soft);height:0;transition:height .25s}
-  .cup.full i{height:100%}
-  .cup.half i{height:50%}
+  .cup{width:34px;height:42px;border:none;background:none;cursor:pointer;padding:0}
+  .cup svg{display:block}
+  .cup .water{fill:var(--blue-soft);transition:y .25s}
+  .cup .glass{fill:none;stroke:var(--blue);stroke-width:1.6;stroke-linejoin:round}
+  .cup .shine{fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;opacity:.8}
   .waterrow{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--ink2)}
   .waterrow b{font-size:18px;font-weight:300;color:var(--ink)}
   .mini{background:var(--bg);border:none;border-radius:10px;padding:5px 12px;font-size:13px;color:var(--ink2);cursor:pointer}
@@ -533,7 +534,7 @@ function renderToday(){
   // 喝水
   const B=G("bottleMl"), WG=G("waterGoal"), wm=waterMl(d), cupsN=Math.max(Math.ceil(WG/B), Math.ceil(wm/B));
   $("bottleNote").textContent=`一瓶 ${B} ml・點杯子 +1 瓶`;
-  $("cups").innerHTML=Array.from({length:cupsN},(_,i)=>{ const f=wm-i*B; return `<button class="cup ${f>=B?"full":f>0?"half":""}" data-cup aria-label="喝了一瓶"><i></i></button>`; }).join("");
+  $("cups").innerHTML=Array.from({length:cupsN},(_,i)=>{ const lv=Math.max(0,Math.min(1,(wm-i*B)/B)); return `<button class="cup" data-cup aria-label="喝了一瓶">${cupSVG(lv)}</button>`; }).join("");
   $("wNow").textContent=fmt(wm); $("wGoal").textContent=fmt(WG);
 
   // 運動
@@ -561,6 +562,10 @@ function renderToday(){
   // 教練的話
   const notes=d.notes||[]; $("notesCard").hidden=!notes.length; $("notes").innerHTML=notes.map(x=>`<li>${esc(x)}</li>`).join("");
 }
+// 杯子圖案：lv = 0（空）～ 1（滿）
+const CUP_PATH="M4 5 L30 5 L27.2 37.6 Q26.9 40 24.5 40 L9.5 40 Q7.1 40 6.8 37.6 Z";
+function cupSVG(lv){ const top=7+33*(1-lv);
+  return `<svg viewBox="0 0 34 42" width="34" height="42" aria-hidden="true"><defs><clipPath id="cc${Math.round(lv*100)}"><path d="${CUP_PATH}"/></clipPath></defs><rect class="water" x="0" y="${top}" width="34" height="42" clip-path="url(#cc${Math.round(lv*100)})"/><path class="glass" d="${CUP_PATH}"/><path class="shine" d="M9 10 L10.6 33"/></svg>`; }
 function weekExDays(id){ const f=firstShot()||S.settings.startDate; const k=Math.floor(diffDays(id,f)/7); const st=addDays(f,7*k);
   let c=0; for(let i=0;i<7;i++){ const d=S.days[addDays(st,i)]; if(d&&((d.exercises||[]).length||d.exercise)) c++; } return c; }
 
