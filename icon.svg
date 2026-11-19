@@ -1,11 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#F3ECE3"/>
-  <circle cx="256" cy="262" r="176" fill="#FBF8F4"/>
-  <path d="M256 296 L256 392" stroke="#9DAE9B" stroke-width="14" stroke-linecap="round"/>
-  <path d="M256 384 C214 372 190 340 184 304 C222 314 248 338 256 366 Z" fill="#9DAE9B"/>
-  <path d="M256 360 C294 344 320 316 326 282 C290 292 266 316 256 342 Z" fill="#B7C4B4"/>
-  <path d="M190 196 L214 148 L238 186 L256 136 L274 186 L298 148 L322 196 C322 262 294 300 256 300 C218 300 190 262 190 196 Z" fill="#C7A5A0"/>
-  <path d="M256 136 L274 186 L256 300 C232 300 214 280 210 240 C214 200 236 170 256 136 Z" fill="#D9BCB7" opacity=".7"/>
-  <path d="M362 132 L369 150 L387 157 L369 164 L362 182 L355 164 L337 157 L355 150 Z" fill="#B89F87"/>
-  <path d="M146 118 L150 128 L160 132 L150 136 L146 146 L142 136 L132 132 L142 128 Z" fill="#B89F87" opacity=".7"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="50" font-size="86" text-anchor="middle" dominant-baseline="central">🌷</text></svg>

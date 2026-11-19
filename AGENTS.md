@@ -4,7 +4,7 @@
 
 ## 開始改之前
 1. 先讀 `STYLE.md`（版面風格）、`COACH.md`（教練貼上格式）。
-2. 整個 App 只有一個檔案：`index.html`（圖示檔 `icon.svg`、`icon-192.png`、`icon-512.png`、`apple-touch-icon.png`、`manifest.webmanifest` 另外放；Yui 選的是鬱金香圖示）。**不要拆成多個檔案、不要改用框架（React、Vue、Tailwind 等）**。
+2. 整個 App 只有一個檔案：`index.html`（圖示檔 `icon.svg`、`icon-192.png`、`icon-512.png`、`apple-touch-icon.png`、`manifest.webmanifest` 另外放；主畫面圖示是 Yui 用 GPT 畫的鬱金香；瀏覽器分頁小圖示 `icon.svg` 是 🌷 emoji）。**不要拆成多個檔案、不要改用框架（React、Vue、Tailwind 等）**。
 3. 交付時給 Yui「完整的檔案」，不要只給片段或 diff。
 
 ## 一定要保留的東西
