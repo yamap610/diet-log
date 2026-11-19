@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===== 小仙女養成計畫（diet-log）=====
+    // 只有登入的本人能讀寫自己的資料
+    match /dietlog_users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /dietlog_users/{uid}/{rest=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ===== 嘟嘟一家（home-hub）原本的資料，維持原本的開放設定 =====
+    // 這些 App 沒有登入功能，所以保持可以讀寫，以免原本的 App 壞掉
+    match /items/{id=**}          { allow read, write: if true; }
+    match /quicknotes/{id=**}     { allow read, write: if true; }
+    match /shopping/{id=**}       { allow read, write: if true; }
+    match /articles/{id=**}       { allow read, write: if true; }
+    match /reminders/{id=**}      { allow read, write: if true; }
+    match /wiki/{id=**}           { allow read, write: if true; }
+    match /inventory/{id=**}      { allow read, write: if true; }
+    match /wardrobe/{id=**}       { allow read, write: if true; }
+    match /todos/{id=**}          { allow read, write: if true; }
+    match /memo/{id=**}           { allow read, write: if true; }
+    match /diary_entries/{id=**}  { allow read, write: if true; }
+    match /diary_settings/{id=**} { allow read, write: if true; }
+  }
+}

@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F3ECE3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="小仙女">
+<title>小仙女養成計畫</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@500;600&display=swap">
+<!--
+  小仙女養成計畫｜減重紀錄 App（單一 HTML 檔）
+  ✦ 改版面前請先讀 STYLE.md；教練貼上格式見 COACH.md；給 AI 的規則見 AGENTS.md
+  ✦ 顏色、字型、圓角都集中在下面的 :root 變數，不要另外寫死顏色
+-->
+<style>
+  /* ===== 色票與基本設定（STYLE.md 第 1 節） ===== */
+  :root{
+    --bg:#F3ECE3; --card:#FBF8F4; --line:#E4D9CC;
+    --ink:#5A4A3E; --ink2:#8C7B6E; --ink3:#B3A496;
+    --tea:#B89F87; --tea-soft:#E6D8C8;
+    --sage:#9DAE9B; --sage-soft:#DDE4DA;
+    --rose:#C7A5A0; --rose-soft:#EEDFDB;
+    --blue:#99A8B5; --blue-soft:#DDE3E8;
+    --warn:#B5786E; --good:#6C7D6A;
+    --sans:"Noto Sans TC","Noto Sans CJK TC","PingFang TC","Heiti TC",sans-serif;
+    --serif:"Noto Serif TC","Noto Serif CJK TC","Songti TC",serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;line-height:1.65;padding:calc(22px + env(safe-area-inset-top)) 16px 110px}
+  button{font-family:inherit;color:inherit}
+  .wrap{max-width:460px;margin:0 auto}
+  header{text-align:center;margin-bottom:18px}
+  .eyebrow{font-size:10px;letter-spacing:.34em;color:var(--ink3);text-transform:uppercase}
+  h1{font-family:var(--serif);font-weight:500;font-size:20px;letter-spacing:.14em;margin-top:4px}
+  .status{font-size:12px;color:var(--ink3);text-align:center;margin:-8px 0 12px}
+  .status:empty{display:none}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px}
+  .card h2{font-family:var(--serif);font-weight:500;font-size:15px;letter-spacing:.12em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .card h2 .r{margin-left:auto;font-family:var(--sans);font-size:12px;color:var(--ink3);letter-spacing:.04em;font-weight:400}
+  .empty{font-size:13px;color:var(--ink3);text-align:center;padding:14px 0}
+  .view{display:none}
+  .view.on{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .h2add{margin-left:auto;background:var(--bg);border:none;border-radius:10px;padding:3px 10px;font-family:var(--sans);font-size:12px;color:var(--ink2);cursor:pointer;letter-spacing:.04em}
+  .btn{width:100%;border:1px solid var(--tea);background:var(--tea);color:#fff;border-radius:14px;padding:12px;font-size:14px;letter-spacing:.1em;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--ink)}
+  .btn.ok{background:var(--sage);border-color:var(--sage)}
+  .btn+.btn{margin-top:10px}
+  .tap{cursor:pointer}
+
+  /* ===== 登入畫面 ===== */
+  .login{text-align:center;padding:40px 10px}
+  .login p{font-size:13px;color:var(--ink2);margin:10px 0 22px}
+
+  /* ===== 今天：日期切換 ===== */
+  .daynav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .daynav button{background:var(--card);border:1px solid var(--line);color:var(--ink2);width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer}
+  .daynav .d{text-align:center;font-size:13px;color:var(--ink2);letter-spacing:.08em}
+  .daynav .d b{display:block;font-family:var(--serif);font-weight:500;font-size:16px;color:var(--ink);letter-spacing:.06em}
+  .backtoday{display:block;margin:-4px auto 12px;background:none;border:none;font-size:12px;color:var(--tea);cursor:pointer}
+  .backtoday[hidden]{display:none}
+
+  /* ===== 今天：日誌卡 ===== */
+  .jtitle{font-family:var(--serif);font-weight:600;font-size:17px;letter-spacing:.04em;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:10px}
+  .jshot{font-size:13px;color:var(--ink2);margin-bottom:14px}
+  .jweight{border-left:3px solid var(--tea-soft);padding:2px 0 2px 12px;display:grid;grid-template-columns:auto 1fr;column-gap:6px;row-gap:2px;font-size:13.5px}
+  .jweight span{color:var(--ink2)}
+  .jweight .up{color:var(--warn)} .jweight .down{color:var(--good)}
+
+  /* ===== 今天：餐點 ===== */
+  .meal{display:flex;gap:12px;padding:12px 0;border-top:1px dashed var(--line);align-items:flex-start;cursor:pointer}
+  .meals .meal:first-child{border-top:none;padding-top:4px}
+  .tag{flex:none;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;letter-spacing:.04em;background:var(--tc)}
+  .meal .v{flex:1;min-width:0;font-size:14px;line-height:1.55}
+  .meal .n{flex:none;text-align:right;font-size:11.5px;color:var(--ink2);white-space:nowrap;line-height:1.4}
+  .meal .n b{display:block;font-size:15px;font-weight:500;color:var(--ink)}
+  .meal .tip{display:block;font-size:12px;color:var(--ink2);margin-top:3px}
+  .meal .tip:empty{display:none}
+  .addrow{display:flex;gap:8px;margin-top:12px}
+  .addrow button{flex:1;background:var(--bg);border:none;border-radius:12px;padding:10px;font-size:13px;color:var(--ink2);cursor:pointer}
+  .addrow .paste{background:var(--tea-soft);color:var(--ink)}
+
+  /* ===== 今天：進度條 ===== */
+  .metric{margin:6px 0 14px}
+  .mrow{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;font-size:13px;color:var(--ink2)}
+  .mrow b{font-size:20px;font-weight:300;color:var(--ink);margin-right:2px}
+  .bar{height:8px;border-radius:8px;background:var(--tea-soft);overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--c);border-radius:8px;transition:width .3s}
+  .mnote{font-size:11.5px;color:var(--ink3);margin-top:4px}
+  .over{color:var(--warn)}
+
+  /* ===== 今天：喝水 ===== */
+  .cups{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .cup{width:34px;height:42px;border-radius:6px 6px 10px 10px;border:1.5px solid var(--blue);background:transparent;position:relative;overflow:hidden;cursor:pointer;padding:0}
+  .cup i{position:absolute;left:0;right:0;bottom:0;background:var(--blue-soft);height:0;transition:height .25s}
+  .cup.full i{height:100%}
+  .cup.half i{height:50%}
+  .waterrow{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--ink2)}
+  .waterrow b{font-size:18px;font-weight:300;color:var(--ink)}
+  .mini{background:var(--bg);border:none;border-radius:10px;padding:5px 12px;font-size:13px;color:var(--ink2);cursor:pointer}
+
+  /* ===== 選擇鈕（運動、心情、副作用） ===== */
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{background:var(--bg);border:1px solid transparent;border-radius:16px;padding:5px 11px;font-size:13px;cursor:pointer;color:var(--ink)}
+  .chip.on{background:var(--tea-soft);border-color:var(--tea)}
+  .sub{font-size:11.5px;color:var(--ink3);letter-spacing:.06em;margin:12px 0 6px}
+  .exlist{margin-top:10px}
+  .exitem{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-top:1px dashed var(--line)}
+  .exitem:first-child{border-top:none}
+  .x{background:none;border:none;color:var(--ink3);font-size:15px;cursor:pointer;padding:0 4px}
+  .moods{display:flex;justify-content:space-between}
+  .mood{font-size:26px;background:none;border:none;cursor:pointer;opacity:.35;filter:grayscale(.6);transition:.15s;padding:2px 4px}
+  .mood.on{opacity:1;filter:none;transform:scale(1.12)}
+  .levels{display:flex;gap:6px}
+  .shotday{font-size:12px;color:var(--ink2);background:var(--rose-soft);border-radius:10px;padding:2px 10px;display:inline-block;margin-bottom:10px}
+
+  /* ===== 生活紀錄小格 ===== */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .cell2{background:var(--bg);border-radius:12px;padding:9px 11px;font-size:13px;cursor:pointer}
+  .cell2 span{display:block;font-size:11px;color:var(--ink3);letter-spacing:.06em}
+  .cell2.none b{color:var(--ink3);font-weight:400}
+  .cell2 b{font-weight:500}
+  .cell2.wide{grid-column:1/-1}
+  .notes li{list-style:none;font-size:13px;padding-left:16px;position:relative;margin-bottom:7px}
+  .notes li::before{content:"—";position:absolute;left:0;color:var(--tea)}
+
+  /* ===== 紀錄：體重、月曆、每週 ===== */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;gap:6px;margin-bottom:12px}
+  .stats span{display:block;font-size:11px;color:var(--ink3);letter-spacing:.1em}
+  .stats b{font-weight:300;font-size:18px}
+  .stats small{font-size:11px;color:var(--ink2);margin-left:2px}
+  .wbar{height:8px;border-radius:8px;background:var(--tea-soft);overflow:hidden}
+  .wbar i{display:block;height:100%;background:var(--tea);border-radius:8px}
+  .wlab{display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin:4px 0 8px}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:10px 2px;border-top:1px dashed var(--line);font-size:13px;cursor:pointer}
+  .row:first-child{border-top:none}
+  .row .s{font-size:12px;color:var(--ink2)}
+  .more{display:block;width:100%;margin-top:6px;background:var(--bg);border:none;border-radius:12px;padding:10px;font-size:13px;color:var(--ink2);cursor:pointer}
+  .calhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .calhead b{font-family:var(--serif);font-weight:500;font-size:16px;letter-spacing:.08em}
+  .calhead button{background:none;border:1px solid var(--line);color:var(--ink2);width:30px;height:30px;border-radius:50%;cursor:pointer}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+  .cal .wd{font-size:11px;color:var(--ink3);padding-bottom:2px}
+  .cell{aspect-ratio:1/1.12;border-radius:10px;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:transparent;border:none;color:var(--ink);cursor:pointer}
+  .cell.has{background:var(--card);border:1px solid var(--line)}
+  .cell.today{outline:1.5px solid var(--tea)}
+  .cell .kc{font-size:9.5px;color:var(--ink3)}
+  .cell .dot{width:6px;height:6px;border-radius:50%}
+  .legend{display:flex;gap:14px;justify-content:center;font-size:11px;color:var(--ink3);margin-top:10px}
+  .legend i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
+  .wk{padding:14px 0;border-top:1px dashed var(--line)}
+  .wk:first-child{border-top:none;padding-top:2px}
+  .wk-h{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+  .wk-h b{font-family:var(--serif);font-weight:500;font-size:15px}
+  .wk-h .now{font-size:10.5px;background:var(--rose-soft);color:var(--ink2);padding:1px 8px;border-radius:9px}
+  .wk-h .wk-d{margin-left:auto;font-size:12px;color:var(--ink3)}
+  .wk-s{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;background:var(--bg);border-radius:12px;padding:10px 4px}
+  .wk-s span{display:block;font-size:10.5px;color:var(--ink3);letter-spacing:.04em}
+  .wk-s b{font-weight:300;font-size:17px}
+  .wk-s small{font-size:10px;color:var(--ink2);margin-left:1px}
+  .wk-f{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);margin-top:8px}
+
+  /* ===== 猛健樂 ===== */
+  .shot-next{display:flex;justify-content:space-between;align-items:center;background:var(--rose-soft);border-radius:14px;padding:14px 16px}
+  .shot-next span{font-size:12px;color:var(--ink2);letter-spacing:.08em;display:block}
+  .shot-next b{font-weight:500;font-size:17px}
+  .shot-next .cd{text-align:right}
+  .shot-next .cd b{font-size:22px;font-weight:300}
+  .pen{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;font-size:12px;color:var(--ink2)}
+  .pdots{display:flex;gap:6px;flex:1;justify-content:center}
+  .pd{width:22px;height:8px;border-radius:4px;background:var(--line)}
+  .pd.on{background:var(--rose)}
+  .hint{font-size:12px;color:var(--ink2);background:var(--bg);border-radius:12px;padding:9px 12px;margin-top:12px}
+  .shot{display:flex;gap:12px;padding:12px 0;border-top:1px dashed var(--line);font-size:13px;cursor:pointer}
+  .shot:first-child{border-top:none;padding-top:0}
+  .shot .no{flex:none;width:48px;height:48px;border-radius:50%;background:var(--blue-soft);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink2)}
+  .shot .no b{font-size:17px;font-weight:500;color:var(--ink);margin:0 1px}
+  .shot .sm{color:var(--ink2);font-size:12px;margin-top:2px}
+  .setable{width:100%;border-collapse:collapse;font-size:12.5px}
+  .setable td{padding:6px 2px;border-top:1px dashed var(--line)}
+  .setable tr:first-child td{border-top:none}
+  .setable .bar{height:6px}
+
+  /* ===== 設定 ===== */
+  .acct{display:flex;align-items:center;gap:12px;font-size:13px}
+  .acct img{width:40px;height:40px;border-radius:50%}
+  .acct .r{margin-left:auto}
+  .codebox{background:var(--bg);border-radius:12px;padding:10px 12px;font-size:12px;color:var(--ink2);white-space:pre-wrap;word-break:break-all;max-height:180px;overflow:auto;margin-bottom:10px}
+
+  /* ===== 底部分頁 ===== */
+  nav{position:fixed;left:0;right:0;bottom:0;background:rgba(251,248,244,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom));z-index:20}
+  nav .in{max-width:460px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+  nav a{text-decoration:none;color:var(--ink3);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;letter-spacing:.08em;padding:4px 0}
+  nav a .ic{font-size:19px;filter:grayscale(1);opacity:.55;transition:.2s}
+  nav a.on{color:var(--ink)}
+  nav a.on .ic{filter:none;opacity:1}
+  svg text{font-family:var(--sans)}
+
+  /* ===== 下方彈出視窗（編輯、貼上） ===== */
+  .sheet-bg{position:fixed;inset:0;background:rgba(90,74,62,.35);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+  .sheet{background:var(--card);width:100%;max-width:480px;max-height:90vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column}
+  .sh-h{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
+  .sh-h b{font-family:var(--serif);font-weight:500;font-size:16px;letter-spacing:.08em}
+  .sh-x{background:none;border:none;font-size:18px;color:var(--ink2);cursor:pointer}
+  .sh-b{overflow:auto;padding:8px 18px 10px;-webkit-overflow-scrolling:touch}
+  .sh-sec{font-size:12px;color:var(--ink3);letter-spacing:.12em;margin:14px 0 8px}
+  .f{display:block;margin-bottom:10px;min-width:0}
+  .f span{display:block;font-size:11.5px;color:var(--ink2);margin-bottom:3px}
+  .f input,.f textarea,.f select{width:100%;font-family:inherit;font-size:16px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .f textarea{resize:vertical}
+  .f2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+  .sh-msg{font-size:12px;color:var(--warn);text-align:center;min-height:16px;padding:0 18px}
+  .sh-f{display:flex;gap:8px;padding:10px 18px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+  .sh-f button{flex:1;border-radius:12px;padding:11px;font-size:14px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+  .sh-f .sh-save{background:var(--tea);border-color:var(--tea);color:#fff}
+  .sh-f .sh-del{color:var(--warn)}
+  .sh-f button:disabled{opacity:.5}
+  .pv{font-size:12.5px;margin-top:6px}
+  .pv div{padding:5px 0;border-top:1px dashed var(--line);display:flex;gap:8px}
+  .pv div:first-child{border-top:none}
+  .pv .bad{color:var(--warn)}
+  .pv i{font-style:normal;flex:none}
+  .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;font-size:13px;padding:8px 16px;border-radius:20px;z-index:60;opacity:0;transition:.25s;pointer-events:none}
+  .toast.on{opacity:.92}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Daily Journal</div>
+    <h1>小仙女養成計畫</h1>
+  </header>
+  <div class="status" id="status">讀取中…</div>
+
+  <!-- 未登入 -->
+  <section class="view" id="v-login">
+    <div class="card login">
+      <div style="font-size:40px">🌷</div>
+      <p>用 Google 帳號登入，<br>手機和電腦的紀錄就會同步。</p>
+      <button class="btn" id="loginBtn">用 Google 登入</button>
+    </div>
+  </section>
+
+  <!-- 今天 -->
+  <section class="view" id="v-today">
+    <div class="daynav">
+      <button id="prev" aria-label="前一天">‹</button>
+      <div class="d"><b id="dTitle">—</b><span id="dSub"></span></div>
+      <button id="next" aria-label="後一天">›</button>
+    </div>
+    <button class="backtoday" id="backToday" hidden>回到今天</button>
+
+    <div class="card" id="journal"></div>
+
+    <div class="card">
+      <h2>🍎 飲食紀錄</h2>
+      <div class="meals" id="meals"></div>
+      <div class="addrow"><button class="paste" id="pasteBtn">📋 貼上教練估算</button><button id="addMeal">＋ 自己輸入</button></div>
+    </div>
+
+    <div class="card">
+      <h2>🔥 今日進度</h2>
+      <div class="metric">
+        <div class="mrow"><span>熱量</span><span><b id="kNow">0</b>/ <span id="kGoal"></span> 大卡</span></div>
+        <div class="bar" style="--c:var(--tea)"><i id="kBar"></i></div>
+        <div class="mnote" id="kLeft"></div>
+      </div>
+      <div class="metric" style="margin-bottom:0">
+        <div class="mrow"><span>蛋白質</span><span><b id="pNow">0</b>/ <span id="pGoal"></span> g</span></div>
+        <div class="bar" style="--c:var(--sage);background:var(--sage-soft)"><i id="pBar"></i></div>
+        <div class="mnote" id="pLeft"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>💦 喝水<span class="r" id="bottleNote"></span></h2>
+      <div class="cups" id="cups"></div>
+      <div class="waterrow"><span><b id="wNow">0</b> / <span id="wGoal"></span> ml</span><span><button class="mini" id="wMinus">－ 1 瓶</button> <button class="mini" id="wEdit">輸入</button></span></div>
+    </div>
+
+    <div class="card">
+      <h2>🏃🏻‍♀️ 運動<span class="r" id="exWeek"></span></h2>
+      <div class="chips" id="exTypes"></div>
+      <div class="sub">時間</div>
+      <div class="chips" id="exMins"></div>
+      <div class="exlist" id="exList"></div>
+    </div>
+
+    <div class="card">
+      <h2>☺️ 心情</h2>
+      <div class="moods" id="moods"></div>
+    </div>
+
+    <div class="card">
+      <h2>⚠️ 副作用</h2>
+      <div id="shotDay"></div>
+      <div class="chips" id="seItems"></div>
+      <div class="sub">程度</div>
+      <div class="levels chips" id="seLevels"></div>
+      <div class="sub">備註</div>
+      <div class="cell2 wide" id="seNote"></div>
+    </div>
+
+    <div class="card">
+      <h2>🌿 生活紀錄</h2>
+      <div class="grid2" id="extras"></div>
+    </div>
+
+    <div class="card" id="notesCard" hidden>
+      <h2>💬 教練的話</h2>
+      <ul class="notes" id="notes"></ul>
+    </div>
+
+    <button class="btn" id="copyBtn">複製今天的日誌</button>
+  </section>
+
+  <!-- 紀錄 -->
+  <section class="view" id="v-records">
+    <div class="card">
+      <h2>📈 體重變化</h2>
+      <div class="stats" id="wStats"></div>
+      <div id="wProg"></div>
+      <div id="chart"></div>
+    </div>
+    <div class="card">
+      <h2>體重紀錄<button class="h2add" id="addW">＋ 新增</button></h2>
+      <div id="wList"></div>
+    </div>
+    <div class="card">
+      <div class="calhead"><button id="mPrev" aria-label="上個月">‹</button><b id="mTitle"></b><button id="mNext" aria-label="下個月">›</button></div>
+      <div class="cal" id="cal"></div>
+      <div class="legend"><span><i style="background:var(--sage)"></i>達標</span><span><i style="background:var(--rose)"></i>超過</span><span><i style="background:var(--blue)"></i>吃太少</span></div>
+    </div>
+    <div class="card">
+      <h2>每週總覽</h2>
+      <div id="weeks"></div>
+    </div>
+  </section>
+
+  <!-- 猛健樂 -->
+  <section class="view" id="v-shot">
+    <div class="card" id="shotNext"></div>
+    <div class="card">
+      <h2>施打紀錄<button class="h2add" id="addS">＋ 新增</button></h2>
+      <div id="shots"></div>
+    </div>
+    <div class="card">
+      <h2>打針後第幾天最不舒服</h2>
+      <div id="seTable"></div>
+    </div>
+  </section>
+
+  <!-- 設定 -->
+  <section class="view" id="v-settings">
+    <div class="card">
+      <h2>帳號</h2>
+      <div class="acct" id="acct"></div>
+    </div>
+    <div class="card">
+      <h2>目標<button class="h2add" id="editGoals">修改</button></h2>
+      <div class="grid2" id="goals"></div>
+    </div>
+    <div class="card">
+      <h2>給教練的說明</h2>
+      <p class="s" style="font-size:12.5px;color:var(--ink2);margin:-4px 0 10px">換新教練（Claude、Codex…）時，把這段複製給它，它就會照 App 能貼上的格式回覆你。</p>
+      <div class="codebox" id="coachText"></div>
+      <button class="btn ghost" id="copyCoach">複製給教練的說明</button>
+    </div>
+    <div class="card">
+      <h2>備份與匯入</h2>
+      <button class="btn ghost" id="exportJson">💾 下載完整備份（JSON）</button>
+      <button class="btn ghost" id="exportTxt">📝 下載全部日誌文字</button>
+      <button class="btn ghost" id="importBtn">📥 匯入資料</button>
+    </div>
+  </section>
+</div>
+
+<nav id="nav" hidden><div class="in">
+  <a href="#today" data-v="today"><span class="ic">📝</span>今天</a>
+  <a href="#records" data-v="records"><span class="ic">📈</span>紀錄</a>
+  <a href="#shot" data-v="shot"><span class="ic">💉</span>猛健樂</a>
+  <a href="#settings" data-v="settings"><span class="ic">⚙️</span>設定</a>
+</div></nav>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+/* =====================================================================
+   1. Firebase（沿用嘟嘟一家 home-hub-be41f 專案；資料放在 dietlog_users/{登入者uid}/ 底下）
+   ===================================================================== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { initializeFirestore, persistentLocalCache, collection, doc, onSnapshot, setDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAFGSQOvAp1thZkWBZ-nLHe-uR8llDQDI8",
+  authDomain: "home-hub-be41f.firebaseapp.com",
+  projectId: "home-hub-be41f",
+  storageBucket: "home-hub-be41f.firebasestorage.app",
+  messagingSenderId: "286497032414",
+  appId: "1:286497032414:web:16d3f0242a400d0de85a4f"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+let db;
+try { db = initializeFirestore(app, { localCache: persistentLocalCache() }); }
+catch(e){ db = initializeFirestore(app, {}); }
+
+/* =====================================================================
+   2. 狀態與小工具
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const DEFAULTS = {kcalGoal:1400, proteinGoal:85, waterGoal:2800, bottleMl:480, startWeight:71.1, goalWeight:55, finalGoalWeight:50, startDate:"2026-11-04"};
+const S = {user:null, settings:{...DEFAULTS}, days:{}, weights:{}, shots:{}, sel:null, month:null, wOpen:false, exType:null, loaded:0};
+const WK = ["日","一","二","三","四","五","六"];
+const CIRC = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳";
+const CN = ["一","二","三","四","五","六","七","八","九","十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十"];
+const MEAL_TYPES = ["早餐","午餐","點心","晚餐"];
+const TAG = {"早餐":"var(--rose-soft)","午餐":"var(--sage-soft)","晚餐":"var(--blue-soft)","點心":"var(--tea-soft)"};
+const EX_TYPES = ["🧘🏻 伸展","🤸🏻 有氧","🏃🏻‍♀️ 超慢跑","💪🏻 肌力","🚶🏻‍♀️ 走路"];
+const EX_MINS = [10,15,20,30];
+const MOODS = ["😣","😕","😐","🙂","😊"];
+const SE_ITEMS = ["😣 噁心","🤢 想吐","💩 便秘","💧 腹瀉","🍽️ 沒食慾","😴 疲倦","🤕 頭痛","🎈 脹氣"];
+const SE_LEVELS = ["輕","中","重"];
+const SITES = ["肚子左","肚子右","大腿左","大腿右","手臂左","手臂右"];
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num = v => { const n = Number(String(v ?? "").replace(/[^\d.\-]/g,"")); return isFinite(n) ? n : 0; };
+const fmt = n => Math.round(n).toLocaleString("en-US");
+const pad = n => String(n).padStart(2,"0");
+const ds = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const todayStr = () => ds(new Date());
+const dt = s => new Date(s+"T00:00:00");
+const md = s => { const d = dt(s); return (d.getMonth()+1)+"/"+d.getDate(); };
+const mdw = s => `${md(s)}（${WK[dt(s).getDay()]}）`;
+const addDays = (s,n) => { const d = dt(s); d.setDate(d.getDate()+n); return ds(d); };
+const diffDays = (a,b) => Math.round((dt(a)-dt(b))/864e5);
+const sgn = n => { let t=Math.abs(n).toFixed(2); if(t.endsWith("0")) t=t.slice(0,-1); if(t.endsWith(".0")) t=t.slice(0,-2); return (n>0?"+":n<0?"−":"±")+t; };
+const kgf = n => Number(Number(n).toFixed(2)).toString();
+const G = k => num(S.settings[k]) || DEFAULTS[k];
+const sorted = obj => Object.values(obj).sort((a,b)=>a.id<b.id?-1:1);
+function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("on"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("on"),2000); }
+
+/* ===== Firestore 路徑與寫入 ===== */
+const base = () => `dietlog_users/${S.user.uid}`;
+const dref = (col,id) => doc(db, `${base()}/${col}/${id}`);
+async function saveDay(id, patch){ await setDoc(dref("days",id), {...patch, updatedAt:new Date().toISOString()}, {merge:true}); }
+async function saveSettings(patch){ await setDoc(doc(db, base()), {settings:{...S.settings, ...patch}}, {merge:true}); }
+function guard(fn){ return async (...a)=>{ try{ await fn(...a); }catch(e){ console.error(e); toast("儲存失敗，請檢查網路後再試"); } }; }
+
+/* ===== 一天的資料（相容舊網頁匯入的欄位） =====
+   days/{日期}: meals[{type,name,kcal,protein,tip,status}], waterMl, exercises[{type,min}], mood,
+                sideEffects{items[],level,note}, steps, bm, supplement, sleep, notes[]
+   舊欄位 water（文字）、exercise（文字）、sideEffect（文字）仍會顯示 */
+const day = id => S.days[id] || {id, meals:[]};
+const meals = d => (d.meals||[]).filter(m=>m.status!=="plan");
+function totals(d){ let k=0,p=0; meals(d).forEach(m=>{k+=num(m.kcal);p+=num(m.protein)}); return {k,p}; }
+function waterMl(d){ if(d.waterMl!=null) return num(d.waterMl); return num(String(d.water||"").replace(/,/g,"")); }
+function exText(d){ const ex=d.exercises||[]; if(ex.length) return ex.map(e=>`${e.type.replace(/^\S+\s/,"")} ${e.min} 分鐘`).join("、"); return d.exercise||""; }
+function seText(d){ const s=d.sideEffects; if(s&&(s.items?.length||s.note)){ const a=(s.items||[]).map(x=>x.replace(/^\S+\s/,"")).join("、"); return [a&&(a+(s.level?`（${s.level}）`:"")), s.note].filter(Boolean).join("；"); } return d.sideEffect||""; }
+function hasSE(d){ const s=d.sideEffects; return !!((s&&(s.items?.length||s.note)) || d.sideEffect && !/^(無|沒有|還好|目前無感)/.test(d.sideEffect)); }
+
+/* ===== 猛健樂：第幾針第幾劑（每針約 4 劑） ===== */
+function penInfo(){
+  let pen=1, d=0;
+  return sorted(S.shots).map(s=>{ if(num(s.pen)>0){ pen=num(s.pen); d=num(s.penDose)>0?num(s.penDose):d+1; } else { d++; if(d>4){pen++; d=1;} } return {...s,pen,penDose:d}; });
+}
+const penLabel = x => `第${CN[x.pen-1]||x.pen}針・第${CN[x.penDose-1]||x.penDose}劑`;
+const firstShot = () => sorted(S.shots)[0]?.id;
+function dayN(id){ const f=firstShot(); return f&&id>=f ? diffDays(id,f)+1 : null; }
+function lastShotBefore(id){ return sorted(S.shots).filter(s=>s.id<=id).pop(); }
+function shotLines(id){
+  const all=penInfo(), done=all.filter(s=>s.id<=id); if(!done.length) return [];
+  const dz=s=>String(s.dose||"").replace(/\s+/g,"");
+  const line=(s,ok)=>`💉 ${md(s.id)} ${CIRC[s.pen-1]||""}${dz(s)}第${CN[s.penDose-1]||s.penDose}劑${ok?"✅":""}`;
+  const L=done.map(s=>line(s,true)), last=done[done.length-1];
+  let nx=all.find(s=>s.id>id);
+  if(!nx) nx={id:addDays(last.id,7), dose:last.dose, pen:last.penDose>=4?last.pen+1:last.pen, penDose:last.penDose>=4?1:last.penDose+1};
+  L.push(line(nx,false)); return L;
+}
+
+/* ===== 體重 ===== */
+const weightsArr = () => sorted(S.weights).filter(w=>num(w.kg)>0);
+function weightInfo(id){
+  const ws=weightsArr(), i=ws.findIndex(w=>w.id===id); if(i<0) return null;
+  const kg=num(ws[i].kg), prev=i>0?ws[i-1]:null;
+  return {kg, diff: prev?kg-num(prev.kg):null, prevId: prev?.id, lost: G("startWeight")-kg, note: ws[i].note||""};
+}
+function weightLines(id){
+  const w=weightInfo(id);
+  if(w){ let d=""; if(w.diff!=null){ const gap=diffDays(id,w.prevId); d=`（${sgn(w.diff)}${gap>1?`，和 ${md(w.prevId)} 比`:""}）`; }
+    return [`今日體重：${kgf(w.kg)} kg${d}`, `累積減重：${kgf(w.lost)} kg`]; }
+  const p=weightsArr().filter(x=>x.id<id).pop();
+  return ["今日體重：未測量", p?`累積減重：${kgf(G("startWeight")-num(p.kg))} kg（以上次 ${md(p.id)} 的體重計算）`:"累積減重："];
+}
+
+/* =====================================================================
+   3. 今天頁
+   ===================================================================== */
+function renderToday(){
+  const id=S.sel, d=day(id), n=dayN(id), t=todayStr();
+  $("dTitle").textContent=mdw(id);
+  $("dSub").textContent = n?`猛健樂 DAY${n}`:`第 ${diffDays(id,S.settings.startDate||DEFAULTS.startDate)+1} 天`;
+  $("next").disabled = id>=t; $("next").style.opacity = id>=t?.3:1;
+  $("backToday").hidden = id===t;
+
+  // 日誌卡
+  const w=weightInfo(id), sl=shotLines(id);
+  $("journal").innerHTML=`<div class="jtitle">📝${md(id)} 猛健樂紀錄${n?" DAY"+n:""}</div>
+    ${sl.length?`<div class="jshot">${sl.map(esc).join("<br>")}</div>`:""}
+    <div class="jweight tap" id="jw"><span>初始體重：</span><div>${kgf(G("startWeight"))} kg</div>
+      <span>目標體重：</span><div>${kgf(G("goalWeight"))} kg</div>
+      <span>今日體重：</span><div>${w?`${kgf(w.kg)} kg${w.diff!=null?` <span class="${w.diff>0?"up":"down"}">（${sgn(w.diff)}）</span>`:""}`:`<span>未測量・點這裡輸入</span>`}</div>
+      <span>累積減重：</span><div>${w?kgf(w.lost)+" kg":"—"}</div></div>`;
+  $("jw").onclick=()=>openWeight(id);
+
+  // 餐點
+  const ms=(d.meals||[]).map((m,i)=>({...m,i})).sort((a,b)=>MEAL_TYPES.indexOf(a.type)-MEAL_TYPES.indexOf(b.type));
+  $("meals").innerHTML = ms.length ? ms.map(m=>`<div class="meal" data-meal="${m.i}"><div class="tag" style="--tc:${TAG[m.type]||"var(--tea-soft)"}">${esc(m.type)}</div><div class="v">${esc(m.name)}<span class="tip">${esc(m.tip||"")}</span></div><div class="n"><b>${fmt(num(m.kcal))}</b>大卡<br>${fmt(num(m.protein))} g</div></div>`).join("") : `<div class="empty">還沒有餐點，貼上教練的估算吧</div>`;
+
+  // 進度
+  const tt=totals(d), K=G("kcalGoal"), P=G("proteinGoal");
+  $("kGoal").textContent=fmt(K); $("pGoal").textContent=fmt(P);
+  $("kNow").textContent=fmt(tt.k); $("pNow").textContent=fmt(tt.p);
+  $("kBar").style.width=Math.min(100,tt.k/K*100)+"%"; $("pBar").style.width=Math.min(100,tt.p/P*100)+"%";
+  $("kLeft").innerHTML = tt.k<=K?`還可以吃 ${fmt(K-tt.k)} 大卡`:`<span class="over">超過 ${fmt(tt.k-K)} 大卡</span>`;
+  $("pLeft").textContent = tt.p<P?`還差 ${fmt(P-tt.p)} g`:"已達標 ✓";
+
+  // 喝水
+  const B=G("bottleMl"), WG=G("waterGoal"), wm=waterMl(d), cupsN=Math.max(Math.ceil(WG/B), Math.ceil(wm/B));
+  $("bottleNote").textContent=`一瓶 ${B} ml・點杯子 +1 瓶`;
+  $("cups").innerHTML=Array.from({length:cupsN},(_,i)=>{ const f=wm-i*B; return `<button class="cup ${f>=B?"full":f>0?"half":""}" data-cup aria-label="喝了一瓶"><i></i></button>`; }).join("");
+  $("wNow").textContent=fmt(wm); $("wGoal").textContent=fmt(WG);
+
+  // 運動
+  $("exTypes").innerHTML=EX_TYPES.map(x=>`<button class="chip ${S.exType===x?"on":""}" data-ext="${esc(x)}">${x}</button>`).join("")+`<button class="chip" data-ext="__own">➕ 自己輸入</button>`;
+  $("exMins").innerHTML=EX_MINS.map(m=>`<button class="chip" data-exm="${m}">${m} 分鐘</button>`).join("");
+  const ex=d.exercises||[];
+  $("exList").innerHTML = ex.length ? ex.map((e,i)=>`<div class="exitem"><span>${esc(e.type)}・${e.min} 分鐘</span><button class="x" data-exdel="${i}" aria-label="刪除">✕</button></div>`).join("") : (d.exercise?`<div class="exitem"><span>${esc(d.exercise)}</span></div>`:`<div class="mnote">先選項目，再點時間就會記下來</div>`);
+  $("exWeek").textContent=`這週運動 ${weekExDays(id)} 天`;
+
+  // 心情
+  $("moods").innerHTML=MOODS.map(m=>`<button class="mood ${d.mood===m?"on":""}" data-mood="${m}">${m}</button>`).join("");
+
+  // 副作用
+  const ls=lastShotBefore(id), se=d.sideEffects||{items:[],level:"",note:""};
+  $("shotDay").innerHTML = ls?`<span class="shotday">打針後第 ${diffDays(id,ls.id)} 天</span>`:"";
+  $("seItems").innerHTML=SE_ITEMS.map(x=>`<button class="chip ${(se.items||[]).includes(x)?"on":""}" data-se="${esc(x)}">${x}</button>`).join("");
+  $("seLevels").innerHTML=SE_LEVELS.map(x=>`<button class="chip ${se.level===x?"on":""}" data-sel="${x}">${x}</button>`).join("");
+  const note=se.note|| (d.sideEffects?"":d.sideEffect||"");
+  $("seNote").className="cell2 wide"+(note?"":" none"); $("seNote").innerHTML=`<b>${note?esc(note):"點這裡寫備註"}</b>`;
+
+  // 生活紀錄
+  const cell=(k,label,v,wide)=>`<div class="cell2 ${v?"":"none"} ${wide?"wide":""}" data-extra="${k}"><span>${label}</span><b>${v?esc(v):"—"}</b></div>`;
+  $("extras").innerHTML=cell("steps","🚶🏻‍♀️ 步行",d.steps)+cell("bm","🚽 排便",d.bm)+cell("supplement","💊 保健",d.supplement)+cell("sleep","😴 睡眠",d.sleep);
+
+  // 教練的話
+  const notes=d.notes||[]; $("notesCard").hidden=!notes.length; $("notes").innerHTML=notes.map(x=>`<li>${esc(x)}</li>`).join("");
+}
+function weekExDays(id){ const f=firstShot()||S.settings.startDate; const k=Math.floor(diffDays(id,f)/7); const st=addDays(f,7*k);
+  let c=0; for(let i=0;i<7;i++){ const d=S.days[addDays(st,i)]; if(d&&((d.exercises||[]).length||d.exercise)) c++; } return c; }
+
+/* ===== 日誌文字（跟 iOS 日誌 App 同格式） ===== */
+function journalText(id){
+  const d=day(id), n=dayN(id), t=totals(d);
+  const L=[`📝${md(id)} 猛健樂紀錄${n?" DAY"+n:""}`, ...shotLines(id), "", `初始體重：${kgf(G("startWeight"))} kg`, `目標體重：${kgf(G("goalWeight"))} kg`, ...weightLines(id), "", "🍎飲食紀錄"];
+  const g={}; meals(d).filter(m=>num(m.kcal)>0||num(m.protein)>0).forEach(m=>(g[m.type]=g[m.type]||[]).push(m.name));
+  MEAL_TYPES.forEach(k=>L.push(`｜${k}：${(g[k]||[]).join("、")}`));
+  Object.keys(g).filter(k=>!MEAL_TYPES.includes(k)).forEach(k=>L.push(`｜${k}：${g[k].join("、")}`));
+  const wm=waterMl(d), steps=String(d.steps||"");
+  L.push("", `🔥 今日熱量：約 ${fmt(t.k)} 大卡｜蛋白質約 ${fmt(t.p)} g`,
+    `💦 喝水：${wm?fmt(wm)+" ml":""}`, `💊 保健：${d.supplement||""}`, `🏋🏻‍♀️ 運動：${exText(d)}`,
+    `🚶🏻‍♀️ 步行：${steps&&!/步$/.test(steps)?steps+" 步":steps}`, `🚽 排便：${d.bm||""}`, "", `⚠️副作用：${seText(d)}`);
+  return L.join("\n");
+}
+async function copyText(txt, okMsg){
+  try{ await navigator.clipboard.writeText(txt); toast(okMsg); }
+  catch(e){ openSheet("長按文字複製", `<label class="f"><textarea rows="14" readonly>${esc(txt)}</textarea></label>`, null); }
+}
+
+/* =====================================================================
+   4. 紀錄頁（體重、月曆、每週）
+   ===================================================================== */
+const W_SHOW = 5;
+function renderRecords(){
+  const ws=weightsArr(), st=G("startWeight"), goal=G("goalWeight"), cur=ws.length?num(ws[ws.length-1].kg):null;
+  const pct=cur!=null?Math.max(0,Math.min(100,(st-cur)/(st-goal)*100)):0;
+  $("wStats").innerHTML=`<div><span>原始</span><b>${kgf(st)}</b><small>kg</small></div><div><span>目前</span><b>${cur!=null?kgf(cur):"—"}</b><small>kg</small></div><div><span>已減</span><b>${cur!=null?kgf(st-cur):"—"}</b><small>kg</small></div><div><span>離 ${kgf(goal)}</span><b>${cur!=null?kgf(Math.max(0,cur-goal)):"—"}</b><small>kg</small></div>`;
+  $("wProg").innerHTML=cur!=null?`<div class="wbar"><i style="width:${pct}%"></i></div><div class="wlab"><span>${kgf(st)}</span><span>已完成 ${pct.toFixed(0)}%</span><span>${kgf(goal)}</span></div>`:"";
+  $("chart").innerHTML = ws.length ? chartSVG(ws) : `<div class="empty">量了體重，這裡就會畫出曲線</div>`;
+  const rows=[...ws].reverse();
+  $("wList").innerHTML = rows.length ? rows.map((w,i)=>{ if(!S.wOpen&&i>=W_SHOW) return ""; const prev=rows[i+1], dd=prev?num(w.kg)-num(prev.kg):null;
+      return `<div class="row" data-w="${w.id}"><div>${mdw(w.id)}${w.note?`<div class="s">${esc(w.note)}</div>`:""}</div><div style="text-align:right;white-space:nowrap">${kgf(num(w.kg))} kg${dd!=null?`<div class="s" style="color:${dd>0?"var(--warn)":"var(--good)"}">${sgn(dd)}</div>`:""}</div></div>`; }).join("")
+      + (rows.length>W_SHOW?`<button class="more" id="wMore">${S.wOpen?"收起 ▲":`展開全部（共 ${rows.length} 筆）▼`}</button>`:"")
+    : `<div class="empty">還沒有體重紀錄</div>`;
+  renderCalendar(); renderWeeks();
+}
+function chartSVG(ws){
+  const W=420,H=170,pl=34,pr=14,pt=14,pb=26, vals=ws.map(w=>num(w.kg));
+  const lo=Math.floor(Math.min(...vals)-1), hi=Math.ceil(Math.max(...vals)+1);
+  const x=i=>ws.length===1?(pl+W-pr)/2:pl+i*(W-pl-pr)/(ws.length-1), y=v=>pt+(hi-v)/(hi-lo)*(H-pt-pb);
+  let g=""; for(let k=0;k<=2;k++){ const v=lo+(hi-lo)*k/2, yy=y(v); g+=`<line x1="${pl}" x2="${W-pr}" y1="${yy}" y2="${yy}" stroke="#E4D9CC" stroke-dasharray="2 4"/><text x="${pl-8}" y="${yy+4}" font-size="10" fill="#B3A496" text-anchor="end">${v.toFixed(0)}</text>`; }
+  const pts=ws.map((w,i)=>`${x(i)},${y(num(w.kg))}`).join(" ");
+  const area=ws.length>1?`<polygon points="${x(0)},${H-pb} ${pts} ${x(ws.length-1)},${H-pb}" fill="#B89F87" opacity=".12"/>`:"";
+  const line=ws.length>1?`<polyline points="${pts}" fill="none" stroke="#B89F87" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`:"";
+  const step=Math.ceil(ws.length/6);
+  const dots=ws.map((w,i)=>`<circle cx="${x(i)}" cy="${y(num(w.kg))}" r="3.5" fill="#FBF8F4" stroke="#B89F87" stroke-width="2"/>`+((i%step===0||i===ws.length-1)?`<text x="${x(i)}" y="${H-8}" font-size="10" fill="#B3A496" text-anchor="middle">${md(w.id)}</text>`:"")).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="體重變化圖">${g}${area}${line}${dots}</svg>`;
+}
+function dayColor(d){ const k=totals(d).k; if(!k) return ""; if(k<1200) return "var(--blue)"; if(k<=G("kcalGoal")*1.05) return "var(--sage)"; return "var(--rose)"; }
+function renderCalendar(){
+  if(!S.month){ const d=dt(S.sel||todayStr()); S.month={y:d.getFullYear(),m:d.getMonth()}; }
+  const {y,m}=S.month; $("mTitle").textContent=`${y} 年 ${m+1} 月`;
+  const first=new Date(y,m,1), n=new Date(y,m+1,0).getDate(), t=todayStr();
+  let h=WK.map(w=>`<div class="wd">${w}</div>`).join("");
+  for(let i=0;i<first.getDay();i++) h+=`<div></div>`;
+  for(let d=1;d<=n;d++){ const id=`${y}-${pad(m+1)}-${pad(d)}`, dy=S.days[id], k=dy?totals(dy).k:0;
+    h+=`<button class="cell ${dy?"has":""} ${id===t?"today":""}" data-day="${id}" ${id>t?"disabled":""}>${d}${dy?`<span class="dot" style="background:${dayColor(dy)||"var(--line)"}"></span><span class="kc">${k?fmt(k):""}</span>`:""}</button>`; }
+  $("cal").innerHTML=h;
+}
+function renderWeeks(){
+  const f=firstShot()||S.settings.startDate, t=todayStr();
+  const nowK=Math.floor(diffDays(t,f)/7); if(nowK<0){ $("weeks").innerHTML=`<div class="empty">還沒有紀錄</div>`; return; }
+  const pens=penInfo(); let h="";
+  for(let k=nowK;k>=0;k--){
+    const st=addDays(f,7*k), en=addDays(st,6), ds7=[...Array(7)].map((_,i)=>S.days[addDays(st,i)]).filter(Boolean);
+    const rec=ds7.filter(d=>totals(d).k>0), n=rec.length||1;
+    const ak=rec.reduce((s,d)=>s+totals(d).k,0)/n, ap=rec.reduce((s,d)=>s+totals(d).p,0)/n;
+    const exd=ds7.filter(d=>(d.exercises||[]).length||d.exercise).length;
+    const ws=weightsArr().filter(w=>w.id>=st&&w.id<=en), wch=ws.length>1?num(ws[ws.length-1].kg)-num(ws[0].kg):null;
+    const sh=pens.find(x=>x.id>=st&&x.id<=en);
+    h+=`<div class="wk"><div class="wk-h"><b>第 ${k+1} 週</b>${k===nowK?`<span class="now">進行中</span>`:""}<span class="wk-d">${md(st)} – ${md(en)}</span></div>
+      <div class="wk-s"><div><span>平均熱量</span><b>${rec.length?fmt(ak):"—"}</b></div><div><span>平均蛋白質</span><b>${rec.length?fmt(ap):"—"}</b><small>g</small></div><div><span>記錄</span><b>${rec.length}</b><small>天</small></div><div><span>運動</span><b>${exd}</b><small>天</small></div></div>
+      <div class="wk-f">${sh?`💉 ${penLabel(sh)}${sh.dose?"・"+esc(sh.dose):""}`:"💉 —"}<span>${wch!=null?`體重 ${sgn(wch)} kg`:""}</span></div></div>`;
+  }
+  $("weeks").innerHTML=h;
+}
+
+/* =====================================================================
+   5. 猛健樂頁
+   ===================================================================== */
+function renderShots(){
+  const sh=penInfo();
+  if(!sh.length){ $("shotNext").innerHTML=`<div class="empty">還沒有施打紀錄，按下面的「＋ 新增」</div>`; $("shots").innerHTML=""; $("seTable").innerHTML=`<div class="empty">打針後記錄副作用，這裡會整理出來</div>`; return; }
+  const last=sh[sh.length-1], nd=addDays(last.id,7), left=diffDays(nd,todayStr());
+  const cd=left>0?`還有 <b>${left}</b> 天`:left===0?`<b>今天</b>`:`已過 <b>${-left}</b> 天`;
+  const nx=last.penDose>=4?{pen:last.pen+1,penDose:1}:{pen:last.pen,penDose:last.penDose+1};
+  const used=sh.filter(x=>x.pen===last.pen).length;
+  const lastSite=[...sh].reverse().find(x=>x.site)?.site, si=SITES.indexOf(lastSite), sug=si>=0?SITES[(si+1)%SITES.length]:"";
+  $("shotNext").innerHTML=`<div class="shot-next"><div><span>下一劑・${penLabel(nx)}</span><b>${mdw(nd)}</b></div><div class="cd"><span>倒數</span>${cd}</div></div>
+    <div class="pen"><span>目前這一針（${CIRC[last.pen-1]||last.pen}）</span><div class="pdots">${[1,2,3,4].map(i=>`<i class="pd ${i<=used?"on":""}"></i>`).join("")}${used>4?`<i class="pd on"></i>`:""}</div><span>已打 ${used} 劑</span></div>
+    ${lastSite?`<div class="hint">📍 上次打在「${esc(lastSite)}」${sug?`，這次可以換「${sug}」`:"，這次記得換個位置"}</div>`:""}
+    ${last.penDose>=4?`<div class="hint">如果這一針還有殘劑，就是第${CN[last.pen-1]}針・第五劑</div>`:""}`;
+  $("shots").innerHTML=[...sh].reverse().map(x=>`<div class="shot" data-s="${x.id}"><div class="no"><span>第<b>${x.penDose}</b>劑</span></div><div><div>${mdw(x.id)}・${penLabel(x)}</div><div class="sm">${[x.dose?"劑量 "+esc(x.dose):"劑量待補", x.site?"部位 "+esc(x.site):""].filter(Boolean).join("・")}</div>${x.note?`<div class="sm">${esc(x.note)}</div>`:""}</div></div>`).join("");
+  // 打針後第 N 天的副作用次數
+  const cnt=Array(8).fill(0), tot=Array(8).fill(0);
+  Object.values(S.days).forEach(d=>{ const ls=lastShotBefore(d.id); if(!ls) return; const k=diffDays(d.id,ls.id); if(k<0||k>7) return; tot[k]++; if(hasSE(d)) cnt[k]++; });
+  const mx=Math.max(1,...cnt);
+  $("seTable").innerHTML = tot.some(Boolean) ? `<table class="setable">${cnt.map((c,k)=>tot[k]?`<tr><td style="width:84px">${k===0?"打針當天":`第 ${k} 天`}</td><td><div class="bar" style="--c:var(--rose);background:var(--rose-soft)"><i style="width:${c/mx*100}%"></i></div></td><td style="width:70px;text-align:right;color:var(--ink2)">${c} / ${tot[k]} 次</td></tr>`:"").join("")}</table>` : `<div class="empty">打針後記錄副作用，這裡會整理出來</div>`;
+}
+
+/* =====================================================================
+   6. 設定頁
+   ===================================================================== */
+const COACH_TEXT = () => `你是我的減重飲食教練。我回報三餐後，請估算熱量和蛋白質，給我一句簡短建議，最後「一定」要附上一個程式碼框，裡面每一項一行，格式如下（用全形｜分隔，我會整段複製貼到 App）：
+
+日期｜餐別｜內容｜熱量｜蛋白質｜一句小提醒（可省略）
+例：${md(todayStr())}｜午餐｜蔥鹽增雞蛋白麵、茶葉蛋｜480｜28｜先吃配料很棒
+
+餐別只用：早餐、午餐、點心、晚餐。內容的品項用頓號「、」分隔。熱量（大卡）和蛋白質（g）只寫數字。
+
+我回報其他項目時，也用同樣方式給我一行：
+${md(todayStr())}｜體重｜68.3
+${md(todayStr())}｜喝水｜1920
+${md(todayStr())}｜步行｜3200
+${md(todayStr())}｜排便｜⭕️
+${md(todayStr())}｜睡眠｜睡 7 小時，醒 2 次
+${md(todayStr())}｜保健｜鐵
+${md(todayStr())}｜運動｜超慢跑 15 分鐘
+${md(todayStr())}｜心情｜🙂
+${md(todayStr())}｜副作用｜胃脹（輕）
+${md(todayStr())}｜教練的話｜蛋白質達標了 👏
+${md(todayStr())}｜打針｜2.5 mg｜肚子左｜備註
+
+我的目標：每天 ${fmt(G("kcalGoal"))} 大卡（不要低於 1,200）、蛋白質 ${fmt(G("proteinGoal"))} g、喝水 ${fmt(G("waterGoal"))} ml。語氣像朋友一樣鼓勵我，有問題直接說，用繁體中文。`;
+function renderSettings(){
+  const u=S.user;
+  $("acct").innerHTML=u?`${u.photoURL?`<img src="${esc(u.photoURL)}" alt="">`:""}<div><b>${esc(u.displayName||"")}</b><div class="s" style="font-size:12px;color:var(--ink2)">${esc(u.email||"")}</div></div><button class="mini r" id="logoutBtn">登出</button>`:"";
+  const c=(l,v)=>`<div class="cell2" data-goals><span>${l}</span><b>${v}</b></div>`;
+  $("goals").innerHTML=c("熱量",fmt(G("kcalGoal"))+" 大卡")+c("蛋白質",fmt(G("proteinGoal"))+" g")+c("喝水",fmt(G("waterGoal"))+" ml")+c("水瓶一瓶",fmt(G("bottleMl"))+" ml")+c("起始體重",kgf(G("startWeight"))+" kg")+c("第一階段",kgf(G("goalWeight"))+" kg")+c("最終目標",kgf(G("finalGoalWeight"))+" kg")+c("開始日期",esc(S.settings.startDate||""));
+  $("coachText").textContent=COACH_TEXT();
+}
+
+/* =====================================================================
+   7. 彈出視窗（編輯用）
+   ===================================================================== */
+function closeSheet(){ const s=$("sheet"); if(s){ s.remove(); document.body.style.overflow=""; } }
+function openSheet(title, body, onSave, onDel, saveLabel="儲存"){
+  closeSheet();
+  const el=document.createElement("div"); el.className="sheet-bg"; el.id="sheet";
+  el.innerHTML=`<div class="sheet"><div class="sh-h"><b>${esc(title)}</b><button class="sh-x" data-act="close" aria-label="關閉">✕</button></div><div class="sh-b">${body}</div><div class="sh-msg" id="shMsg"></div><div class="sh-f">${onDel?`<button class="sh-del" data-act="del">刪除</button>`:""}<button data-act="close">${onSave?"取消":"關閉"}</button>${onSave?`<button class="sh-save" data-act="save">${saveLabel}</button>`:""}</div></div>`;
+  document.body.appendChild(el); document.body.style.overflow="hidden";
+  const msg=t=>{ el.querySelector("#shMsg").textContent=t; };
+  const lock=v=>el.querySelectorAll(".sh-f button").forEach(b=>b.disabled=v);
+  async function run(fn){ lock(true); msg("儲存中…");
+    try{ const r=await fn(el); if(r!==false){ closeSheet(); } else { lock(false); } }
+    catch(err){ console.error(err); msg(err&&err.userMsg||"儲存沒有成功，請檢查網路後再試"); lock(false); } }
+  el.addEventListener("click",e=>{
+    if(e.target===el) return closeSheet();
+    const a=e.target.closest("[data-act]"); if(!a) return;
+    if(a.dataset.act==="close") return closeSheet();
+    if(a.dataset.act==="del"){ if(a.dataset.sure!=="1"){ a.dataset.sure="1"; a.textContent="再按一次刪除"; return; } return run(onDel); }
+    if(a.dataset.act==="save") return run(onSave);
+  });
+  el.msg=msg; return el;
+}
+const fld=(label,name,v,ph="",type="text")=>`<label class="f"><span>${label}</span><input name="${name}" type="${type}" value="${esc(v??"")}" placeholder="${esc(ph)}"${type==="number"?' inputmode="decimal" step="any"':""}></label>`;
+const area=(label,name,v,ph="",rows=2)=>`<label class="f"><span>${label}</span><textarea name="${name}" rows="${rows}" placeholder="${esc(ph)}">${esc(v??"")}</textarea></label>`;
+const sel=(label,name,v,opts)=>`<label class="f"><span>${label}</span><select name="${name}">${opts.concat(opts.includes(v)||!v?[]:[v]).map(o=>`<option${o===v?" selected":""}>${esc(o)}</option>`).join("")}</select></label>`;
+const userErr=t=>{ const e=new Error(t); e.userMsg=t; return e; };
+const val=(el,n)=>{ const x=el.querySelector(`[name="${n}"]`); return x?x.value.trim():""; };
+
+function openMeal(idx){
+  const id=S.sel, d=day(id), list=[...(d.meals||[])], m=idx!=null?list[idx]:{type:guessMealType(),name:"",kcal:"",protein:"",tip:""};
+  openSheet(idx!=null?`編輯${m.type}`:"新增餐點",
+    `${sel("餐別","type",m.type,MEAL_TYPES)}${area("吃了什麼","name",m.name,"品項用頓號「、」分隔")}<div class="f2">${fld("熱量（大卡）","kcal",m.kcal,"0","number")}${fld("蛋白質（g）","protein",m.protein,"0","number")}</div>${area("小提醒","tip",m.tip,"可以不填",1)}`,
+    async el=>{ const nm=val(el,"name"); if(!nm) throw userErr("請寫吃了什麼");
+      const item={...m, type:val(el,"type"), name:nm, kcal:num(val(el,"kcal")), protein:num(val(el,"protein")), tip:val(el,"tip"), status:"done"};
+      if(idx!=null) list[idx]=item; else list.push(item);
+      await saveDay(id,{meals:list}); },
+    idx!=null?async()=>{ list.splice(idx,1); await saveDay(id,{meals:list}); }:null);
+}
+function guessMealType(){ const h=new Date().getHours(); return h<10?"早餐":h<14?"午餐":h<17?"點心":"晚餐"; }
+function openWeight(id){
+  const w=id?S.weights[id]:null;
+  openSheet(id?`體重 ${mdw(id)}`:"新增體重",
+    `${id?"":fld("日期","date",S.sel||todayStr(),"","date")}<div class="f2">${fld("體重（kg）","kg",w?w.kg:"","例：68.3","number")}${fld("備註","note",w?w.note:"","例：空腹")}</div><div class="mnote">早上起床、上完廁所、空腹量的為準</div>`,
+    async el=>{ const d=id||val(el,"date"); if(!/^\d{4}-\d{2}-\d{2}$/.test(d)) throw userErr("請選日期");
+      const kg=num(val(el,"kg")); if(!(kg>20&&kg<300)) throw userErr("請輸入正確的體重");
+      await setDoc(dref("weights",d),{kg,note:val(el,"note")}); },
+    w?async()=>{ await deleteDoc(dref("weights",id)); }:null);
+}
+function openShot(id){
+  const s=id?S.shots[id]:null, pi=id?penInfo().find(x=>x.id===id):null;
+  openSheet(id?`施打 ${mdw(id)}`:"新增施打紀錄",
+    `${id?"":fld("日期","date",todayStr(),"","date")}<div class="f2">${fld("劑量","dose",s?s.dose:(sorted(S.shots).pop()?.dose||"2.5 mg"))}${sel("部位","site",s?s.site:"",["",...SITES])}${fld("第幾針","pen",pi?pi.pen:"","空白＝自動","number")}${fld("這一針第幾劑","penDose",pi?pi.penDose:"","空白＝自動","number")}</div>${area("副作用／備註","note",s?s.note:"")}`,
+    async el=>{ const d=id||val(el,"date"); if(!/^\d{4}-\d{2}-\d{2}$/.test(d)) throw userErr("請選日期");
+      const data={dose:val(el,"dose"),site:val(el,"site"),note:val(el,"note")}; const p=num(val(el,"pen")), pd=num(val(el,"penDose")); if(p>0) data.pen=p; if(pd>0) data.penDose=pd;
+      await setDoc(dref("shots",d),data); },
+    s?async()=>{ await deleteDoc(dref("shots",id)); }:null);
+}
+const EXTRA_LABEL={steps:["🚶🏻‍♀️ 步行","例：3,200"],bm:["🚽 排便","有的話填 ⭕️"],supplement:["💊 保健","例：鐵"],sleep:["😴 睡眠","例：睡 7 小時，醒 2 次"]};
+function openExtra(k){ const id=S.sel, d=day(id), [l,ph]=EXTRA_LABEL[k];
+  openSheet(`${l}・${md(id)}`, fld(l.replace(/^\S+\s/,""),"v",d[k],ph), async el=>{ await saveDay(id,{[k]:val(el,"v")}); }); }
+function openSeNote(){ const id=S.sel, d=day(id), se=d.sideEffects||{items:[],level:"",note:d.sideEffect||""};
+  openSheet(`副作用備註・${md(id)}`, area("備註","v",se.note,"例：下午胃脹，吃完藥好一點",3), async el=>{ await saveDay(id,{sideEffects:{items:se.items||[],level:se.level||"",note:val(el,"v")}}); }); }
+function openWater(){ const id=S.sel;
+  openSheet(`喝水・${md(id)}`, fld("今天總共（ml）","v",waterMl(day(id))||"","例：1920","number"), async el=>{ await saveDay(id,{waterMl:num(val(el,"v"))}); }); }
+function openGoals(){ const s=S.settings;
+  openSheet("修改目標", `<div class="f2">${fld("熱量（大卡）","kcalGoal",G("kcalGoal"),"","number")}${fld("蛋白質（g）","proteinGoal",G("proteinGoal"),"","number")}${fld("喝水（ml）","waterGoal",G("waterGoal"),"","number")}${fld("水瓶一瓶（ml）","bottleMl",G("bottleMl"),"","number")}${fld("起始體重","startWeight",G("startWeight"),"","number")}${fld("第一階段","goalWeight",G("goalWeight"),"","number")}${fld("最終目標","finalGoalWeight",G("finalGoalWeight"),"","number")}${fld("開始日期","startDate",s.startDate,"","date")}</div><div class="mnote">熱量建議不要低於 1,200 大卡</div>`,
+    async el=>{ const p={}; ["kcalGoal","proteinGoal","waterGoal","bottleMl","startWeight","goalWeight","finalGoalWeight"].forEach(k=>{ const v=num(val(el,k)); if(v>0) p[k]=v; }); p.startDate=val(el,"startDate")||s.startDate; await saveSettings(p); }); }
+
+/* =====================================================================
+   8. 貼上教練估算（格式見 COACH.md）
+   ===================================================================== */
+function parseDate(s){
+  s=s.trim(); const t=todayStr();
+  if(!s||/^(今天|today)$/i.test(s)) return S.sel||t;
+  if(/^昨天$/.test(s)) return addDays(t,-1);
+  let m=s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/); if(m) return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+  m=s.match(/^(\d{1,2})[/.月](\d{1,2})日?(?:[（(].*[)）])?$/);
+  if(m){ let y=new Date().getFullYear(); let id=`${y}-${pad(m[1])}-${pad(m[2])}`; if(diffDays(id,t)>30) id=`${y-1}-${pad(m[1])}-${pad(m[2])}`; return id; }
+  return null;
+}
+const KIND = {"早餐":"meal","午餐":"meal","點心":"meal","晚餐":"meal","宵夜":"meal","飲料":"meal","體重":"weight","喝水":"water","步行":"steps","步數":"steps","排便":"bm","睡眠":"sleep","保健":"supplement","運動":"exercise","心情":"mood","副作用":"se","教練的話":"note","備註":"note","打針":"shot","猛健樂":"shot"};
+function parsePaste(text){
+  const out=[];
+  text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l&&!/^```/.test(l)).forEach(line=>{
+    const f=line.split(/[｜|]/).map(x=>x.trim());
+    if(f.length<3){ out.push({line,err:"格式不對"}); return; }
+    let id=parseDate(f[0]), kindName=f[1], rest=f.slice(2);
+    if(!id){ out.push({line,err:"看不懂日期"}); return; }
+    let kind=KIND[kindName]; if(kindName==="宵夜"||kindName==="飲料") kindName="點心";
+    if(!kind){ out.push({line,err:`不認得「${kindName}」`}); return; }
+    if(kind==="meal"){ if(!rest[0]){ out.push({line,err:"缺少內容"}); return; }
+      out.push({id,kind,label:`${md(id)} ${kindName}：${rest[0]}（${fmt(num(rest[1]))} 大卡／${fmt(num(rest[2]))} g）`, data:{type:kindName,name:rest[0],kcal:num(rest[1]),protein:num(rest[2]),tip:rest[3]||"",status:"done"}}); return; }
+    if(kind==="weight"){ const kg=num(rest[0]); if(!(kg>20&&kg<300)){ out.push({line,err:"體重數字不對"}); return; } out.push({id,kind,label:`${md(id)} 體重 ${kgf(kg)} kg`,data:{kg,note:rest[1]||""}}); return; }
+    if(kind==="water"){ const ml=num(rest[0]); out.push({id,kind,label:`${md(id)} 喝水 ${fmt(ml)} ml`,data:ml}); return; }
+    if(kind==="exercise"){ const t=rest.join(" "), mm=t.match(/(\d+)\s*分/); out.push({id,kind,label:`${md(id)} 運動 ${t}`,data:{type:t.replace(/\d+\s*分(鐘)?/,"").trim()||"運動",min:mm?num(mm[1]):0}}); return; }
+    if(kind==="shot"){ out.push({id,kind,label:`${md(id)} 打針 ${rest.filter(Boolean).join("・")}`,data:{dose:rest[0]||"",site:rest[1]||"",note:rest[2]||""}}); return; }
+    out.push({id,kind,label:`${md(id)} ${kindName}：${rest.join(" ")}`,data:rest.join(" ")});
+  });
+  return out;
+}
+async function applyPaste(items){
+  const ok=items.filter(x=>!x.err), byDay={};
+  const get=id=>byDay[id]||(byDay[id]=JSON.parse(JSON.stringify(S.days[id]||{meals:[]})));
+  const batch=writeBatch(db);
+  ok.forEach(x=>{
+    if(x.kind==="weight"){ batch.set(dref("weights",x.id),x.data); return; }
+    if(x.kind==="shot"){ batch.set(dref("shots",x.id),x.data,{merge:true}); return; }
+    const d=get(x.id);
+    if(x.kind==="meal"){ d.meals=d.meals||[]; const i=d.meals.findIndex(m=>m.type===x.data.type&&m.name===x.data.name); if(i>=0) d.meals[i]={...d.meals[i],...x.data}; else d.meals.push(x.data); }
+    else if(x.kind==="water") d.waterMl=x.data;
+    else if(x.kind==="exercise"){ d.exercises=d.exercises||[]; d.exercises.push(x.data); }
+    else if(x.kind==="se"){ const se=d.sideEffects||{items:[],level:"",note:""}; d.sideEffects={...se,note:se.note?se.note+"；"+x.data:x.data}; }
+    else if(x.kind==="note"){ d.notes=d.notes||[]; if(!d.notes.includes(x.data)) d.notes.push(x.data); }
+    else d[x.kind]=x.data;
+  });
+  Object.entries(byDay).forEach(([id,d])=>{ delete d.id; batch.set(dref("days",id),{...d,updatedAt:new Date().toISOString()},{merge:true}); });
+  await batch.commit();
+  return ok.length;
+}
+function openPaste(){
+  const el=openSheet("貼上教練估算",
+    `<div class="mnote" style="margin:6px 0 8px">把教練給的那段文字整段貼上，一行一項。<br>例：${md(S.sel)}｜午餐｜蔥鹽增雞蛋白麵、茶葉蛋｜480｜28</div>${area("","txt","","在這裡貼上",6)}<div class="pv" id="pv"></div>`,
+    async el=>{ const items=parsePaste(val(el,"txt")); if(!items.some(x=>!x.err)) throw userErr("沒有可以匯入的內容，請確認格式");
+      const n=await applyPaste(items); toast(`已加入 ${n} 筆 ✓`); }, null, "加入");
+  const ta=el.querySelector("textarea"), pv=el.querySelector("#pv");
+  const show=()=>{ const items=parsePaste(ta.value); pv.innerHTML=items.map(x=>x.err?`<div class="bad"><i>✗</i><span>${esc(x.line)}<br>${esc(x.err)}</span></div>`:`<div><i>✓</i><span>${esc(x.label)}</span></div>`).join(""); };
+  ta.addEventListener("input",show);
+  if(navigator.clipboard?.readText){ navigator.clipboard.readText().then(t=>{ if(t&&/[｜|]/.test(t)&&!ta.value){ ta.value=t.trim(); show(); } }).catch(()=>{}); }
+}
+
+/* =====================================================================
+   9. 匯入／匯出
+   ===================================================================== */
+function download(name, text, type){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500); }
+function exportJson(){ download(`小仙女養成計畫_備份_${todayStr().replace(/-/g,"")}.json`, JSON.stringify({app:"小仙女養成計畫",exportedAt:new Date().toISOString(),settings:S.settings,days:sorted(S.days),weights:sorted(S.weights),shots:sorted(S.shots)},null,2),"application/json"); }
+function exportTxt(){ download(`小仙女養成計畫_日誌_${todayStr().replace(/-/g,"")}.txt`, Object.keys(S.days).sort().map(journalText).join("\n\n──────────\n\n"),"text/plain"); }
+function openImport(){
+  const el=openSheet("匯入資料",
+    `<div class="mnote" style="margin:6px 0 8px">可以匯入：這個 App 下載的備份檔，或舊的 claude.ai 飲食紀錄網頁「完整備份檔」。同一天的資料會被覆蓋。</div>
+     <label class="f"><span>選擇檔案</span><input type="file" name="file" accept=".json,application/json"></label>${area("或直接貼上 JSON","txt","","",5)}`,
+    async el=>{ let raw=val(el,"txt"); const f=el.querySelector('[name="file"]').files[0]; if(f) raw=await f.text();
+      let j; try{ j=JSON.parse(raw); }catch(e){ throw userErr("讀不懂這個檔案，請確認是 JSON 備份檔"); }
+      const days=j.days||[], weights=j.weights||[], shots=j.shots||[]; if(!days.length&&!weights.length&&!shots.length) throw userErr("檔案裡沒有紀錄");
+      const all=[]; days.forEach(d=>all.push(["days",d])); weights.forEach(d=>all.push(["weights",d])); shots.forEach(d=>all.push(["shots",d]));
+      for(let i=0;i<all.length;i+=400){ const b=writeBatch(db); all.slice(i,i+400).forEach(([c,d])=>{ const {id,...rest}=d; if(id) b.set(dref(c,id),rest); }); await b.commit(); }
+      if(j.settings){ const s={...j.settings}; await saveSettings(s); }
+      toast(`匯入完成：${days.length} 天、${weights.length} 筆體重、${shots.length} 劑`); }, null, "匯入");
+}
+
+/* =====================================================================
+   10. 點擊事件（集中在這裡）
+   ===================================================================== */
+const setSel = id => { S.sel=id; const d=dt(id); S.month={y:d.getFullYear(),m:d.getMonth()}; render(); };
+document.addEventListener("click", guard(async e=>{
+  const t=e.target; if(t.closest("#sheet")) return;
+  const q=s=>t.closest(s);
+  if(q("#loginBtn")) return login();
+  if(q("#logoutBtn")){ await signOut(auth); return; }
+  if(q("#prev")) return setSel(addDays(S.sel,-1));
+  if(q("#next")) return S.sel<todayStr()&&setSel(addDays(S.sel,1));
+  if(q("#backToday")) return setSel(todayStr());
+  if(q("#pasteBtn")) return openPaste();
+  if(q("#addMeal")) return openMeal(null);
+  if(q("[data-meal]")) return openMeal(Number(q("[data-meal]").dataset.meal));
+  if(q("[data-cup]")) return saveDay(S.sel,{waterMl:waterMl(day(S.sel))+G("bottleMl")}).then(()=>toast(`+${G("bottleMl")} ml 💦`));
+  if(q("#wMinus")) return saveDay(S.sel,{waterMl:Math.max(0,waterMl(day(S.sel))-G("bottleMl"))});
+  if(q("#wEdit")) return openWater();
+  if(q("[data-ext]")){ const v=q("[data-ext]").dataset.ext;
+    if(v==="__own"){ return openSheet("自己輸入運動",`<div class="f2">${fld("項目","type","","例：跳舞")}${fld("分鐘","min","","15","number")}</div>`, async el=>{ const ty=val(el,"type"); if(!ty) throw userErr("請寫項目"); const d=day(S.sel); await saveDay(S.sel,{exercises:[...(d.exercises||[]),{type:"➕ "+ty,min:num(val(el,"min"))}]}); }); }
+    S.exType=S.exType===v?null:v; return renderToday(); }
+  if(q("[data-exm]")){ if(!S.exType){ toast("先選運動項目"); return; } const d=day(S.sel); await saveDay(S.sel,{exercises:[...(d.exercises||[]),{type:S.exType,min:num(q("[data-exm]").dataset.exm)}]}); S.exType=null; toast("記下來了 💪🏻"); return; }
+  if(q("[data-exdel]")){ const d=day(S.sel), ex=[...(d.exercises||[])]; ex.splice(Number(q("[data-exdel]").dataset.exdel),1); return saveDay(S.sel,{exercises:ex}); }
+  if(q("[data-mood]")){ const m=q("[data-mood]").dataset.mood; return saveDay(S.sel,{mood:day(S.sel).mood===m?"":m}); }
+  if(q("[data-se]")){ const x=q("[data-se]").dataset.se, d=day(S.sel), se=d.sideEffects||{items:[],level:"",note:d.sideEffect||""}, items=[...(se.items||[])]; const i=items.indexOf(x); i>=0?items.splice(i,1):items.push(x); return saveDay(S.sel,{sideEffects:{...se,items}}); }
+  if(q("[data-sel]")){ const x=q("[data-sel]").dataset.sel, d=day(S.sel), se=d.sideEffects||{items:[],level:"",note:d.sideEffect||""}; return saveDay(S.sel,{sideEffects:{...se,level:se.level===x?"":x}}); }
+  if(q("#seNote")) return openSeNote();
+  if(q("[data-extra]")) return openExtra(q("[data-extra]").dataset.extra);
+  if(q("#copyBtn")) return copyText(journalText(S.sel),"已複製 ✓ 去日誌貼上吧");
+  if(q("#wMore")){ S.wOpen=!S.wOpen; return renderRecords(); }
+  if(q("#addW")) return openWeight(null);
+  if(q("[data-w]")) return openWeight(q("[data-w]").dataset.w);
+  if(q("#mPrev")||q("#mNext")){ let {y,m}=S.month; m+=q("#mPrev")?-1:1; if(m<0){m=11;y--;} if(m>11){m=0;y++;} S.month={y,m}; return renderCalendar(); }
+  if(q("[data-day]")){ S.sel=q("[data-day]").dataset.day; location.hash="today"; return; }
+  if(q("#addS")) return openShot(null);
+  if(q("[data-s]")) return openShot(q("[data-s]").dataset.s);
+  if(q("#editGoals")||q("[data-goals]")) return openGoals();
+  if(q("#copyCoach")) return copyText(COACH_TEXT(),"已複製 ✓ 貼給新教練吧");
+  if(q("#exportJson")) return exportJson();
+  if(q("#exportTxt")) return exportTxt();
+  if(q("#importBtn")) return openImport();
+}));
+
+/* =====================================================================
+   11. 分頁切換、登入、讀取資料
+   ===================================================================== */
+const VIEWS=["today","records","shot","settings"];
+function route(){
+  if(!S.user){ ["login",...VIEWS].forEach(x=>$("v-"+x).classList.toggle("on",x==="login")); $("nav").hidden=true; return; }
+  $("nav").hidden=false; $("v-login").classList.remove("on");
+  const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):"today";
+  VIEWS.forEach(x=>$("v-"+x).classList.toggle("on",x===v));
+  document.querySelectorAll("nav a").forEach(a=>a.classList.toggle("on",a.dataset.v===v));
+  render(); window.scrollTo(0,0);
+}
+function render(){ if(!S.user) return; if(!S.sel) S.sel=todayStr(); renderToday(); renderRecords(); renderShots(); renderSettings(); }
+window.addEventListener("hashchange",route);
+
+async function login(){
+  const p=new GoogleAuthProvider();
+  try{ await signInWithPopup(auth,p); }
+  catch(e){ if(/popup|cancelled-popup/.test(e.code||"")) { await signInWithRedirect(auth,p); } else { console.error(e); toast("登入失敗："+(e.code||"請再試一次")); } }
+}
+getRedirectResult(auth).catch(e=>console.error(e));
+
+let unsubs=[];
+onAuthStateChanged(auth, user=>{
+  unsubs.forEach(u=>u()); unsubs=[];
+  S.user=user; S.days={}; S.weights={}; S.shots={}; S.settings={...DEFAULTS};
+  $("status").textContent = user?"讀取中…":"";
+  if(!user){ route(); return; }
+  const timer=setTimeout(()=>{ if($("status").textContent) $("status").textContent="資料還沒讀到，可能是網路比較慢"; },10000);
+  const got=new Set(); const seen=k=>{ got.add(k); if(got.size===4){ clearTimeout(timer); $("status").textContent=""; } };
+  const fail=e=>{ console.error(e); clearTimeout(timer); $("status").textContent = e.code==="permission-denied"?"沒有權限讀取：請確認 Firebase 安全規則（README.md 第 3 步）":"讀取紀錄時出了點問題，請稍後再試"; };
+  const coll=(name)=>onSnapshot(collection(db,`${base()}/${name}`), s=>{ const o={}; s.forEach(d=>o[d.id]={id:d.id,...d.data()}); S[name]=o; render(); if(!s.metadata.fromCache||s.size) seen(name); }, fail);
+  unsubs.push(onSnapshot(doc(db,base()), s=>{ S.settings={...DEFAULTS,...(s.data()?.settings||{})}; render(); seen("settings"); }, fail));
+  unsubs.push(coll("days"), coll("weights"), coll("shots"));
+  route();
+});
+route();
+</script>
+</body>
+</html>
