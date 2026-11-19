@@ -3,12 +3,18 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ===== 小仙女養成計畫（diet-log）=====
-    // 只有登入的本人能讀寫自己的資料
-    match /dietlog_users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+    // 只有下面列出的 Gmail 登入後可以讀寫（兩個帳號共用同一份資料）
+    // ⚠️ 這個檔案是公開的，所以這裡只放空白；真正的 Gmail 只填在 Firebase 後台的規則裡
+    function isYui() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['填第一個Gmail', '填第二個Gmail'];
     }
-    match /dietlog_users/{uid}/{rest=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+    match /dietlog_users/yui {
+      allow read, write: if isYui();
+    }
+    match /dietlog_users/yui/{rest=**} {
+      allow read, write: if isYui();
     }
 
     // ===== 嘟嘟一家（home-hub）原本的資料，維持原本的開放設定 =====

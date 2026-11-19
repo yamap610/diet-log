@@ -18,7 +18,8 @@
 
 ## 資料
 - Firebase 專案：`home-hub-be41f`（和嘟嘟一家共用）。
-- 這個 App 的資料只放在 `dietlog_users/{uid}/` 底下，**不要讀寫其他 collection**（那是嘟嘟一家的資料）。
+- 這個 App 的資料只放在 `dietlog_users/yui/` 底下（Yui 的兩個 Gmail 共用），**不要讀寫其他 collection**（那是嘟嘟一家的資料）。
+- 能登入的 Gmail 寫在 Firebase 後台的安全規則裡；repo 的 `firestore.rules` 只放空白，**不要把 Gmail 地址寫進 repo**（repo 是公開的）。
 - 資料結構見 `README.md`「資料結構」。新增欄位要相容舊資料（舊欄位 `water`、`exercise`、`sideEffect` 是文字）。
 
 ## 改完要檢查

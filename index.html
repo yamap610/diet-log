@@ -388,7 +388,8 @@
 
 <script type="module">
 /* =====================================================================
-   1. Firebase（沿用嘟嘟一家 home-hub-be41f 專案；資料放在 dietlog_users/{登入者uid}/ 底下）
+   1. Firebase（沿用嘟嘟一家 home-hub-be41f 專案；資料放在 dietlog_users/yui/ 底下）
+      Yui 的兩個 Gmail 都讀寫同一份資料；哪些 Gmail 能用寫在 Firebase 安全規則裡（見 firestore.rules）
    ===================================================================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -444,7 +445,8 @@ const sorted = obj => Object.values(obj).sort((a,b)=>a.id<b.id?-1:1);
 function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("on"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("on"),2000); }
 
 /* ===== Firestore 路徑與寫入 ===== */
-const base = () => `dietlog_users/${S.user.uid}`;
+const DATA_ID = "yui";   // 兩個 Gmail 共用同一份資料
+const base = () => `dietlog_users/${DATA_ID}`;
 const dref = (col,id) => doc(db, `${base()}/${col}/${id}`);
 async function saveDay(id, patch){ await setDoc(dref("days",id), {...patch, updatedAt:new Date().toISOString()}, {merge:true}); }
 async function saveSettings(patch){ await setDoc(doc(db, base()), {settings:{...S.settings, ...patch}}, {merge:true}); }
@@ -916,7 +918,7 @@ onAuthStateChanged(auth, user=>{
   if(!user){ route(); return; }
   const timer=setTimeout(()=>{ if($("status").textContent) $("status").textContent="資料還沒讀到，可能是網路比較慢"; },10000);
   const got=new Set(); const seen=k=>{ got.add(k); if(got.size===4){ clearTimeout(timer); $("status").textContent=""; } };
-  const fail=e=>{ console.error(e); clearTimeout(timer); $("status").textContent = e.code==="permission-denied"?"沒有權限讀取：請確認 Firebase 安全規則（README.md 第 3 步）":"讀取紀錄時出了點問題，請稍後再試"; };
+  const fail=e=>{ console.error(e); clearTimeout(timer); $("status").textContent = e.code==="permission-denied"?`這個帳號（${S.user?.email||""}）沒有權限，請換你的 Gmail 登入，或確認 Firebase 安全規則（README.md 第 3 步）`:"讀取紀錄時出了點問題，請稍後再試"; };
   const coll=(name)=>onSnapshot(collection(db,`${base()}/${name}`), s=>{ const o={}; s.forEach(d=>o[d.id]={id:d.id,...d.data()}); S[name]=o; render(); if(!s.metadata.fromCache||s.size) seen(name); }, fail);
   unsubs.push(onSnapshot(doc(db,base()), s=>{ S.settings={...DEFAULTS,...(s.data()?.settings||{})}; render(); seen("settings"); }, fail));
   unsubs.push(coll("days"), coll("weights"), coll("shots"));

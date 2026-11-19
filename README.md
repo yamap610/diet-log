@@ -31,9 +31,10 @@ repo → Settings → Pages → Source 選「Deploy from a branch」→ Branch �
 ### 3. Firebase 安全規則
 1. 左邊「Firestore Database」→ 上面「規則（Rules）」
 2. **先把原本的規則整段複製起來存好**（萬一要改回來）
-3. 把 `firestore.rules` 的內容整段貼上，按「發布」
+3. 把 `firestore.rules` 的內容整段貼上，**把「填第一個Gmail」「填第二個Gmail」換成你的兩個 Gmail**，按「發布」
+   （repo 是公開的，所以檔案裡只放空白，真正的 Gmail 只填在 Firebase 後台）
 
-> 為什麼要改：這個 App 的資料只有登入的本人能看。
+> 為什麼要改：這個 App 的資料只有你的兩個 Gmail 登入後能看，兩個帳號看到的是同一份紀錄。
 > 嘟嘟一家原本的資料（items、diary_entries…）維持原本的設定，不會壞掉。
 > 如果原本的規則裡有 `match /{document=**}` 開放全部，那條要拿掉，不然減重資料也會被公開。
 
@@ -46,11 +47,11 @@ iPhone Safari 打開網址 → 分享 →「加入主畫面」。
 
 ## 資料結構（Firestore）
 
-全部放在 `dietlog_users/{登入者 uid}/` 底下：
+全部放在 `dietlog_users/yui/` 底下（兩個 Gmail 共用；能登入的 Gmail 寫在 Firebase 安全規則）：
 
 ```
-dietlog_users/{uid}            { settings: { kcalGoal, proteinGoal, waterGoal, bottleMl, startWeight, goalWeight, finalGoalWeight, startDate } }
-dietlog_users/{uid}/days/{YYYY-MM-DD}
+dietlog_users/yui              { settings: { kcalGoal, proteinGoal, waterGoal, bottleMl, startWeight, goalWeight, finalGoalWeight, startDate } }
+dietlog_users/yui/days/{YYYY-MM-DD}
     meals: [{ type: 早餐|午餐|點心|晚餐, name, kcal, protein, tip, status: "done" }]
     waterMl: 1920
     exercises: [{ type: "🏃🏻‍♀️ 超慢跑", min: 15 }]
@@ -59,8 +60,8 @@ dietlog_users/{uid}/days/{YYYY-MM-DD}
     steps, bm, supplement, sleep: 文字
     notes: ["教練的話"]
     （舊網頁匯入的欄位：water、exercise、sideEffect 為文字，App 仍會顯示）
-dietlog_users/{uid}/weights/{YYYY-MM-DD}   { kg, note }
-dietlog_users/{uid}/shots/{YYYY-MM-DD}     { dose, site, note, pen, penDose }
+dietlog_users/yui/weights/{YYYY-MM-DD}   { kg, note }
+dietlog_users/yui/shots/{YYYY-MM-DD}     { dose, site, note, pen, penDose }
 ```
 
 備份檔（JSON）格式：`{ app, exportedAt, settings, days: [{id, ...}], weights: [{id, ...}], shots: [{id, ...}] }`，和舊的 claude.ai 網頁備份檔相容。
