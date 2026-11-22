@@ -15,7 +15,7 @@
 - **編輯功能**：點餐點、體重、施打紀錄、生活紀錄都可以修改；刪除要按兩次。
 - **設定頁「給教練的說明」**（`COACH_TEXT()`）：和 `COACH.md` 內容一致。
 - 有膚色的 emoji 一律用最淺膚色（🏻）。
-- **主畫面圖示要用 Safari 打開**（manifest `display: browser`、不要加 `apple-mobile-web-app-capable`）。iPhone 的獨立 App 模式和 Safari 分開，Google 登入跳轉回來會失敗，一直卡在登入畫面。
+- **iPhone 主畫面 App（全螢幕模式）不能用 Google 登入**（跳轉回來會失敗）。所以登入畫面在主畫面模式只顯示「Email＋密碼」；密碼由 Yui 在 Safari 版用 Google 登入後，到「設定 → 主畫面 App 登入密碼」連結到同一個帳號（linkWithCredential）。這個功能要保留。
 
 ## 資料
 - Firebase 專案：`home-hub-be41f`（和嘟嘟一家共用）。

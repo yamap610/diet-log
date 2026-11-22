@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F3ECE3">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="小仙女">
 <link rel="icon" type="image/svg+xml" href="icon.svg?v=2">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -56,6 +57,12 @@
   /* ===== 登入畫面 ===== */
   .login{text-align:center;padding:40px 10px}
   .login p{font-size:13px;color:var(--ink2);margin:10px 0 22px}
+  .login .or{font-size:12px;color:var(--ink3);margin:18px 0 12px;display:flex;align-items:center;gap:10px}
+  .login .or::before,.login .or::after{content:"";flex:1;height:1px;background:var(--line)}
+  .login .f{text-align:left}
+  .login .hint2{font-size:11.5px;color:var(--ink3);margin-top:10px;line-height:1.6}
+  .login .linkbtn{background:none;border:none;color:var(--tea);font-size:12px;cursor:pointer;margin-top:8px}
+  .login .err{font-size:12px;color:var(--warn);min-height:16px;margin-top:8px}
 
   /* ===== 今天：日期切換 ===== */
   .daynav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
@@ -243,7 +250,17 @@
     <div class="card login">
       <div style="font-size:40px">🌷</div>
       <p>用 Google 帳號登入，<br>手機和電腦的紀錄就會同步。</p>
-      <button class="btn" id="loginBtn">用 Google 登入</button>
+      <div id="googleBox">
+        <button class="btn" id="loginBtn">用 Google 登入</button>
+        <div class="or">或</div>
+      </div>
+      <div id="pwHint" class="hint2" hidden style="margin:-8px 0 14px">放在主畫面的 App 不能用 Google 登入，<br>請用 Email 和密碼登入。</div>
+      <label class="f"><span>Gmail</span><input id="lgEmail" type="email" autocomplete="username" placeholder="你的 Gmail"></label>
+      <label class="f"><span>密碼</span><input id="lgPw" type="password" autocomplete="current-password" placeholder="在 Safari 版「設定」裡設定的密碼"></label>
+      <button class="btn ghost" id="pwLoginBtn">用 Email 和密碼登入</button>
+      <div class="err" id="lgErr"></div>
+      <button class="linkbtn" id="forgotBtn">忘記密碼</button>
+      <div class="hint2">第一次用密碼登入前，要先在 Safari 用 Google 登入，<br>到「設定 → 主畫面 App 登入密碼」設定密碼。</div>
     </div>
   </section>
 
@@ -363,6 +380,11 @@
       <div class="acct" id="acct"></div>
     </div>
     <div class="card">
+      <h2>主畫面 App 登入密碼</h2>
+      <p style="font-size:12.5px;color:var(--ink2);margin:-4px 0 10px" id="pwState"></p>
+      <button class="btn ghost" id="setPwBtn">設定密碼</button>
+    </div>
+    <div class="card">
       <h2>目標<button class="h2add" id="editGoals">修改</button></h2>
       <div class="grid2" id="goals"></div>
     </div>
@@ -395,7 +417,7 @@
       Yui 的兩個 Gmail 都讀寫同一份資料；哪些 Gmail 能用寫在 Firebase 安全規則裡（見 firestore.rules）
    ===================================================================== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, signInWithEmailAndPassword, EmailAuthProvider, linkWithCredential, updatePassword, reauthenticateWithPopup, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, onSnapshot, setDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -702,6 +724,9 @@ function renderSettings(){
   const c=(l,v)=>`<div class="cell2" data-goals><span>${l}</span><b>${v}</b></div>`;
   $("goals").innerHTML=c("熱量",fmt(G("kcalGoal"))+" 大卡")+c("蛋白質",fmt(G("proteinGoal"))+" g")+c("喝水",fmt(G("waterGoal"))+" ml")+c("水瓶一瓶",fmt(G("bottleMl"))+" ml")+c("起始體重",kgf(G("startWeight"))+" kg")+c("第一階段",kgf(G("goalWeight"))+" kg")+c("最終目標",kgf(G("finalGoalWeight"))+" kg")+c("開始日期",esc(S.settings.startDate||""));
   $("coachText").textContent=COACH_TEXT();
+  const hasPw=(u?.providerData||[]).some(p=>p.providerId==="password");
+  $("pwState").textContent = hasPw ? `已設定。主畫面 App 用「${u.email}」和這組密碼登入。` : "放在手機主畫面的 App 不能用 Google 登入，要用 Email＋密碼。在這裡設定一次就好。";
+  $("setPwBtn").textContent = hasPw ? "修改密碼" : "設定密碼";
 }
 
 /* =====================================================================
@@ -863,6 +888,9 @@ document.addEventListener("click", guard(async e=>{
   const q=s=>t.closest(s);
   if(q("#loginBtn")) return login();
   if(q("#logoutBtn")){ await signOut(auth); return; }
+  if(q("#pwLoginBtn")) return pwLogin();
+  if(q("#forgotBtn")) return forgotPw();
+  if(q("#setPwBtn")) return openSetPw();
   if(q("#prev")) return setSel(addDays(S.sel,-1));
   if(q("#next")) return S.sel<todayStr()&&setSel(addDays(S.sel,1));
   if(q("#backToday")) return setSel(todayStr());
@@ -902,7 +930,7 @@ document.addEventListener("click", guard(async e=>{
    ===================================================================== */
 const VIEWS=["today","records","shot","settings"];
 function route(){
-  if(!S.user){ ["login",...VIEWS].forEach(x=>$("v-"+x).classList.toggle("on",x==="login")); $("nav").hidden=true; return; }
+  if(!S.user){ ["login",...VIEWS].forEach(x=>$("v-"+x).classList.toggle("on",x==="login")); $("nav").hidden=true; const sa=isStandalone(); $("googleBox").hidden=sa; $("pwHint").hidden=!sa; return; }
   $("nav").hidden=false; $("v-login").classList.remove("on");
   const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):"today";
   VIEWS.forEach(x=>$("v-"+x).classList.toggle("on",x===v));
@@ -918,6 +946,41 @@ async function login(){
   catch(e){ if(/popup|cancelled-popup/.test(e.code||"")) { await signInWithRedirect(auth,p); } else { console.error(e); toast("登入失敗："+(e.code||"請再試一次")); } }
 }
 getRedirectResult(auth).catch(e=>console.error(e));
+
+/* ===== Email＋密碼登入（給 iPhone 主畫面 App 用；Google 登入在主畫面模式會卡住） ===== */
+const isStandalone = () => window.navigator.standalone===true || window.matchMedia("(display-mode: standalone)").matches;
+const AUTH_ERR = {"auth/invalid-credential":"Email 或密碼不對","auth/wrong-password":"Email 或密碼不對","auth/user-not-found":"Email 或密碼不對","auth/invalid-email":"Email 格式不對","auth/too-many-requests":"試太多次了，請等一下再試","auth/operation-not-allowed":"Firebase 還沒開啟「電子郵件／密碼」登入（README 第 2 步）","auth/weak-password":"密碼至少要 6 個字","auth/network-request-failed":"網路不穩，請再試一次"};
+const authMsg = e => AUTH_ERR[e?.code] || ("發生錯誤："+(e?.code||"請再試一次"));
+async function pwLogin(){
+  const email=$("lgEmail").value.trim(), pw=$("lgPw").value; $("lgErr").textContent="";
+  if(!email||!pw){ $("lgErr").textContent="請輸入 Gmail 和密碼"; return; }
+  $("pwLoginBtn").disabled=true;
+  try{ await signInWithEmailAndPassword(auth,email,pw); }
+  catch(e){ console.error(e); $("lgErr").textContent=authMsg(e); }
+  finally{ $("pwLoginBtn").disabled=false; }
+}
+async function forgotPw(){
+  const email=$("lgEmail").value.trim(); if(!email){ $("lgErr").textContent="先在上面輸入你的 Gmail，再按忘記密碼"; return; }
+  try{ await sendPasswordResetEmail(auth,email); $("lgErr").textContent="重設密碼的信寄出了，請到信箱收信"; }
+  catch(e){ $("lgErr").textContent=authMsg(e); }
+}
+function openSetPw(){
+  const u=auth.currentUser, hasPw=(u.providerData||[]).some(p=>p.providerId==="password");
+  openSheet(hasPw?"修改密碼":"設定主畫面 App 登入密碼",
+    `<div class="mnote" style="margin:6px 0 10px">之後在主畫面 App 用「${esc(u.email)}」和這組密碼登入。</div>${fld("新密碼（至少 6 個字）","pw","","","password")}${fld("再輸入一次","pw2","","","password")}`,
+    async el=>{
+      const pw=val(el,"pw"), pw2=val(el,"pw2");
+      if(pw.length<6) throw userErr("密碼至少要 6 個字"); if(pw!==pw2) throw userErr("兩次輸入的密碼不一樣");
+      const doIt=async()=>{ if(hasPw) await updatePassword(auth.currentUser,pw); else await linkWithCredential(auth.currentUser, EmailAuthProvider.credential(u.email,pw)); };
+      try{ await doIt(); }
+      catch(e){
+        if(e.code==="auth/requires-recent-login"){ await reauthenticateWithPopup(auth.currentUser,new GoogleAuthProvider()); await doIt(); }
+        else if(e.code==="auth/provider-already-linked"){ await updatePassword(auth.currentUser,pw); }
+        else throw userErr(authMsg(e));
+      }
+      await auth.currentUser.reload(); renderSettings(); toast("密碼設定好了 ✓");
+    });
+}
 
 let unsubs=[];
 onAuthStateChanged(auth, user=>{

@@ -26,6 +26,7 @@ repo → Settings → Pages → Source 選「Deploy from a branch」→ Branch �
 1. 到 https://console.firebase.google.com/ → 選 `home-hub-be41f`
 2. 左邊「Authentication」→ 如果是第一次，按「開始使用」
 3. 「Sign-in method」→「Google」→ 啟用 → 選你的 Email 當支援信箱 → 儲存
+   再到「Sign-in method」→「新增供應商」→「電子郵件/密碼」→ 啟用（只開第一個開關）→ 儲存（主畫面 App 要用）
 4. 「Settings（設定）」→「Authorized domains（授權網域）」→「Add domain」→ 輸入 `yamap610.github.io` → 新增
 
 ### 3. Firebase 安全規則
@@ -43,7 +44,9 @@ repo → Settings → Pages → Source 選「Deploy from a branch」→ Branch �
 2. 打開這個 App → 用 Google 登入 →「設定」→「📥 匯入資料」→ 選剛剛下載的檔案 →「匯入」
 
 ### 5. 加到手機主畫面
-iPhone Safari 打開網址 → 分享 →「加入主畫面」。
+1. 先在 Safari 用 Google 登入 →「設定」→「主畫面 App 登入密碼」→ 設定密碼
+2. Safari 分享 →「加入主畫面」
+3. 打開主畫面的 App，用 Gmail＋剛剛的密碼登入（主畫面 App 不能用 Google 登入）
 
 ## 資料結構（Firestore）
 
