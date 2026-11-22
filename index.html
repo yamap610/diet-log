@@ -681,7 +681,9 @@ const COACH_TEXT = () => `你是我的減重飲食教練。我回報三餐後，
 
 餐別只用：早餐、午餐、點心、晚餐。內容的品項用頓號「、」分隔。熱量（大卡）和蛋白質（g）只寫數字。
 
-我回報其他項目時，也用同樣方式給我一行：
+每天晚上我回報完晚餐、步數那些之後，請把「當天全部」整理成一整段給我（三餐、點心、體重、喝水總量、步行、排便、保健、運動、副作用、睡眠、1–3 句教練的話），我一次貼進 App。白天貼過的也一起放進去沒關係，不會重複。
+
+各項目的格式：
 ${md(todayStr())}｜體重｜68.3
 ${md(todayStr())}｜喝水｜1920
 ${md(todayStr())}｜步行｜3200
@@ -814,8 +816,8 @@ async function applyPaste(items){
     const d=get(x.id);
     if(x.kind==="meal"){ d.meals=d.meals||[]; const i=d.meals.findIndex(m=>m.type===x.data.type&&m.name===x.data.name); if(i>=0) d.meals[i]={...d.meals[i],...x.data}; else d.meals.push(x.data); }
     else if(x.kind==="water") d.waterMl=x.data;
-    else if(x.kind==="exercise"){ d.exercises=d.exercises||[]; d.exercises.push(x.data); }
-    else if(x.kind==="se"){ const se=d.sideEffects||{items:[],level:"",note:""}; d.sideEffects={...se,note:se.note?se.note+"；"+x.data:x.data}; }
+    else if(x.kind==="exercise"){ d.exercises=d.exercises||[]; if(!d.exercises.some(e=>e.type===x.data.type&&num(e.min)===num(x.data.min))) d.exercises.push(x.data); }
+    else if(x.kind==="se"){ const se=d.sideEffects||{items:[],level:"",note:""}; if(!(se.note||"").split("；").includes(x.data)) d.sideEffects={...se,note:se.note?se.note+"；"+x.data:x.data}; }
     else if(x.kind==="note"){ d.notes=d.notes||[]; if(!d.notes.includes(x.data)) d.notes.push(x.data); }
     else d[x.kind]=x.data;
   });
