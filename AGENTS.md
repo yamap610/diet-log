@@ -15,6 +15,7 @@
 - **編輯功能**：點餐點、體重、施打紀錄、生活紀錄都可以修改；刪除要按兩次。
 - **設定頁「給教練的說明」**（`COACH_TEXT()`）：和 `COACH.md` 內容一致。
 - 有膚色的 emoji 一律用最淺膚色（🏻）。
+- **主畫面圖示要用 Safari 打開**（manifest `display: browser`、不要加 `apple-mobile-web-app-capable`）。iPhone 的獨立 App 模式和 Safari 分開，Google 登入跳轉回來會失敗，一直卡在登入畫面。
 
 ## 資料
 - Firebase 專案：`home-hub-be41f`（和嘟嘟一家共用）。

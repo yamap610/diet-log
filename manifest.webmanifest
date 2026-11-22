@@ -2,7 +2,7 @@
   "name": "小仙女養成計畫",
   "short_name": "小仙女",
   "start_url": "./",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#F3ECE3",
   "theme_color": "#F3ECE3",
   "icons": [
