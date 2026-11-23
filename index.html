@@ -950,7 +950,11 @@ window.addEventListener("hashchange",route);
 async function login(){
   const p=new GoogleAuthProvider();
   try{ await signInWithPopup(auth,p); }
-  catch(e){ if(/popup|cancelled-popup/.test(e.code||"")) { await signInWithRedirect(auth,p); } else { console.error(e); toast("登入失敗："+(e.code||"請再試一次")); } }
+  catch(e){ console.error(e);
+    const m = e.code==="auth/popup-blocked" ? "登入視窗被擋住了：請到 iPhone「設定 → Apps → Safari」關掉「阻擋彈出式視窗」，再按一次登入"
+      : (e.code==="auth/popup-closed-by-user"||e.code==="auth/cancelled-popup-request") ? "登入視窗被關掉了，請再按一次「用 Google 登入」"
+      : "登入失敗（"+(e.code||"請再試一次")+"）";
+    $("lgErr").textContent=m; }
 }
 getRedirectResult(auth).catch(e=>console.error(e));
 
