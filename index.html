@@ -742,7 +742,7 @@ function openSheet(title, body, onSave, onDel, saveLabel="儲存"){
   const lock=v=>el.querySelectorAll(".sh-f button").forEach(b=>b.disabled=v);
   async function run(fn){ lock(true); msg("儲存中…");
     try{ const r=await fn(el); if(r!==false){ closeSheet(); } else { lock(false); } }
-    catch(err){ console.error(err); msg(err&&err.userMsg||"儲存沒有成功，請檢查網路後再試"); lock(false); } }
+    catch(err){ console.error(err); msg(err&&err.userMsg||saveErrMsg(err)); lock(false); } }
   el.addEventListener("click",e=>{
     if(e.target===el) return closeSheet();
     const a=e.target.closest("[data-act]"); if(!a) return;
@@ -756,6 +756,13 @@ const fld=(label,name,v,ph="",type="text")=>`<label class="f"><span>${label}</sp
 const area=(label,name,v,ph="",rows=2)=>`<label class="f"><span>${label}</span><textarea name="${name}" rows="${rows}" placeholder="${esc(ph)}">${esc(v??"")}</textarea></label>`;
 const sel=(label,name,v,opts)=>`<label class="f"><span>${label}</span><select name="${name}">${opts.concat(opts.includes(v)||!v?[]:[v]).map(o=>`<option${o===v?" selected":""}>${esc(o)}</option>`).join("")}</select></label>`;
 const userErr=t=>{ const e=new Error(t); e.userMsg=t; return e; };
+function saveErrMsg(e){
+  const c=e?.code||"", who=auth.currentUser?.email||"沒有登入";
+  if(c==="permission-denied") return `沒有存檔權限（目前登入：${who}）。請到「設定」登出，再用 Google 重新登入一次`;
+  if(c==="unauthenticated") return "登入過期了，請到「設定」登出後重新登入";
+  if(c==="unavailable"||c==="deadline-exceeded") return "網路不穩，請稍後再試";
+  return `儲存沒有成功（${c||e?.message||"原因不明"}，目前登入：${who}）`;
+}
 const val=(el,n)=>{ const x=el.querySelector(`[name="${n}"]`); return x?x.value.trim():""; };
 
 function openMeal(idx){
