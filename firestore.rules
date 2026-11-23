@@ -7,7 +7,6 @@ service cloud.firestore {
     // ⚠️ 這個檔案是公開的，所以這裡只放空白；真正的 Gmail 只填在 Firebase 後台的規則裡
     function isYui() {
       return request.auth != null
-        && request.auth.token.email_verified == true
         && request.auth.token.email in ['填第一個Gmail', '填第二個Gmail'];
     }
     match /dietlog_users/yui {
